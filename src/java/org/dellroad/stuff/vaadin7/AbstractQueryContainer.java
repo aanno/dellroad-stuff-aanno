@@ -70,8 +70,65 @@ import org.dellroad.stuff.vaadin.PropertyExtractor;
  * @see WindowQueryList
  */
 @SuppressWarnings("serial")
-public abstract class AbstractQueryContainer<T> extends AbstractContainer implements Container.Ordered, Container.Indexed,
-  Container.PropertySetChangeNotifier, Container.ItemSetChangeNotifier {
+public abstract class AbstractQueryContainer<T> extends AbstractContainer implements Container.Ordered, Container.Indexed {
+	
+	private class PropertySetChangeNotifier implements Container.PropertySetChangeNotifier {
+		
+		private PropertySetChangeNotifier() {
+		}
+
+		@Override
+		public void addPropertySetChangeListener(PropertySetChangeListener listener) {
+			AbstractQueryContainer.this.addPropertySetChangeListener(listener);
+		}
+
+		@Override
+		@Deprecated
+		public void addListener(PropertySetChangeListener listener) {
+			AbstractQueryContainer.this.addListener(listener);
+		}
+
+		@Override
+		public void removePropertySetChangeListener(PropertySetChangeListener listener) {
+			AbstractQueryContainer.this.removePropertySetChangeListener(listener);
+		}
+
+		@Override
+		@Deprecated
+		public void removeListener(PropertySetChangeListener listener) {
+			AbstractQueryContainer.this.removeListener(listener);
+		}
+		
+	}
+	
+	private class ItemSetChangeNotifier implements Container.ItemSetChangeNotifier {
+		
+		private ItemSetChangeNotifier() {
+		}
+
+		@Override
+		public void addItemSetChangeListener(ItemSetChangeListener listener) {
+			AbstractQueryContainer.this.addItemSetChangeListener(listener);
+		}
+
+		@Override
+		@Deprecated
+		public void addListener(ItemSetChangeListener listener) {
+			AbstractQueryContainer.this.addListener(listener);
+		}
+
+		@Override
+		public void removeItemSetChangeListener(ItemSetChangeListener listener) {
+			AbstractQueryContainer.this.removeItemSetChangeListener(listener);
+		}
+
+		@Override
+		@Deprecated
+		public void removeListener(ItemSetChangeListener listener) {
+			AbstractQueryContainer.this.removeListener(listener);
+		}
+		
+	}
 
     protected QueryList<? extends T> queryList;
 
