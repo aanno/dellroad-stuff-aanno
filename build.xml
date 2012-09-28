@@ -129,8 +129,26 @@
           verbose="true"
           showWeaveInfo="true"
           failonerror="true">
-            <include name="**/*.aj"/>
+	    <include name="**/spring/*.aj"/>
+	    <include name="**/vaadin/*.aj"/>
         </iajc>
+	
+	<!-- ajc for vaadin7 -->
+        <path id="aspect.vaadin7.classpath">
+            <path refid="javac-vaadin7.classpath"/>
+            <pathelement location="build/classes"/>
+        </path>
+        <iajc srcdir="src/java"
+          destDir="build/classes"
+          classpathRef="aspect.vaadin7.classpath"
+          source="1.6"
+          target="1.6"
+          verbose="true"
+          showWeaveInfo="true"
+          failonerror="true">
+	    <include name="**/vaadin7/*.aj"/>
+        </iajc>
+	
         <property name="aspects.completed" value="true"/>
     </target>
 
