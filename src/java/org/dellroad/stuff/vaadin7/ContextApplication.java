@@ -49,9 +49,12 @@ public class ContextApplication extends org.dellroad.stuff.vaadin7.BaseContextAp
     @Override
     public void invoke(Runnable action) {
         final VaadinSession previous = VaadinSession.getCurrent();
+        /*
         if (previous != null && previous != this)
             throw new IllegalStateException("there is already a current application for this thread (according to Vaadin)");
         VaadinSession.setCurrent(this);
+         */
+        checkSession(previous);
         try {
             super.invoke(action);
         } finally {

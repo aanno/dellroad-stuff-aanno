@@ -18,16 +18,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.server.Page;
 import com.vaadin.server.VaadinServlet;
+import com.vaadin.server.VaadinSession;
 import com.vaadin.ui.Notification;
 
 /**
@@ -49,10 +52,15 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
      * Default notification linger time for error notifications (in milliseconds): Value is {@value}ms.
      */
     public static final int DEFAULT_NOTIFICATION_DELAY = 30000;
+    
+    protected static final String SESSION_ATTRIBUTE = "BaseContextApplication.SESSION_ATTRIBUTE";
+    
+    private static final AtomicInteger SESSION_NUMBER = new AtomicInteger();
 
     private static final ThreadLocal<BaseContextApplication> CURRENT_APPLICATION = new ThreadLocal<BaseContextApplication>();
     private static final ThreadLocal<HttpServletRequest> CURRENT_REQUEST = new ThreadLocal<HttpServletRequest>();
     private static final ThreadLocal<HttpServletResponse> CURRENT_RESPONSE = new ThreadLocal<HttpServletResponse>();
+    private static final ThreadLocal<HttpSession> CURRENT_SESSION = new ThreadLocal<HttpSession>();
 
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
@@ -164,6 +172,26 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     }
 
 // ThreadLocal stuff
+    
+    protected Object getCurrentSessionId() {
+    	final HttpSession session = CURRENT_SESSION.get();
+    	if (session != null) {
+    		return session.getAttribute(SESSION_ATTRIBUTE);
+    	}
+    	return null;
+    }
+    
+    protected void checkSession(VaadinSession vsession) {
+    	Object vo = null;
+    	if (vsession != null && vsession.getSession() != null) {
+    		vo = vsession.getSession().getAttribute(SESSION_ATTRIBUTE);
+    	}
+    	Object mo = getCurrentSessionId();
+    	final boolean test = (vo == mo);
+    	if (!test) {
+            throw new IllegalStateException("there is already a current application for this thread (according to Vaadin)");
+    	}
+    }
 
     /**
      * Set this instance as the "current application" (if not set already) while invoking the given callback.
@@ -252,6 +280,11 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
         BaseContextApplication.CURRENT_APPLICATION.set(this);
         BaseContextApplication.CURRENT_REQUEST.set(request);
         BaseContextApplication.CURRENT_RESPONSE.set(response);
+        
+        final HttpSession session = request.getSession();
+        session.setAttribute(SESSION_ATTRIBUTE, SESSION_NUMBER.incrementAndGet());
+        BaseContextApplication.CURRENT_SESSION.set(session);
+        
         this.doOnRequestStart(request, response);
     }
 
@@ -269,6 +302,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
             BaseContextApplication.CURRENT_APPLICATION.remove();
             BaseContextApplication.CURRENT_REQUEST.remove();
             BaseContextApplication.CURRENT_RESPONSE.remove();
+            BaseContextApplication.CURRENT_SESSION.remove();        
         }
     }
 

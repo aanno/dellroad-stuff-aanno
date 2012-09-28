@@ -27,6 +27,11 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
+import com.vaadin.server.VaadinService;
+import com.vaadin.server.VaadinServlet;
+import com.vaadin.server.VaadinSession;
+import com.vaadin.ui.UI;
+
 /**
  * Vaadin application implementation that manages an associated Spring {@link WebApplicationContext}.
  *
@@ -283,9 +288,12 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
         this.context.setNamespace(this.getApplicationName());
 
         // Set explicit config location(s) if set by parameter
+        // ???
+        /*
         String configLocationValue = this.getProperty(VAADIN_CONTEXT_LOCATION_PARAMETER);
         if (configLocationValue != null)
             this.context.setConfigLocation(configLocationValue);
+         */
 
         // Register listener so we can notify subclass on refresh events
         this.context.addApplicationListener(new SourceFilteringListener(this.context, new RefreshListener()));
@@ -294,7 +302,7 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
         this.context.addBeanFactoryPostProcessor(new BeanFactoryPostProcessor() {
             @Override
             public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
-                beanFactory.registerResolvableDependency(Application.class, BaseSpringContextApplication.this);
+                beanFactory.registerResolvableDependency(VaadinServlet.class, BaseSpringContextApplication.this);
             }
         });
 
