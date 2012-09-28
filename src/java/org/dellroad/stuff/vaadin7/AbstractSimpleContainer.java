@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -176,10 +177,10 @@ public abstract class AbstractSimpleContainer<I, T> extends AbstractInMemoryCont
     public I getItemIdFor(T obj) {
         if (obj == null)
             throw new IllegalArgumentException("null object");
-        for (I itemId : this.getItemIds()) {
+        for (Object itemId : this.getItemIds()) {
             T candidate = this.getJavaObject(itemId);
             if (obj.equals(candidate))
-                return itemId;
+                return (I) itemId;
         }
         return null;
     }
@@ -203,10 +204,10 @@ public abstract class AbstractSimpleContainer<I, T> extends AbstractInMemoryCont
     public I getItemIdForSame(T obj) {
         if (obj == null)
             throw new IllegalArgumentException("null object");
-        for (I itemId : this.getItemIds()) {
+        for (Object itemId : this.getItemIds()) {
             T candidate = this.getJavaObject(itemId);
             if (obj == candidate)
-                return itemId;
+                return (I) itemId;
         }
         return null;
     }
@@ -216,8 +217,8 @@ public abstract class AbstractSimpleContainer<I, T> extends AbstractInMemoryCont
     // Workaround for http://dev.vaadin.com/ticket/8856
     @Override
     @SuppressWarnings("unchecked")
-    public Collection<I> getItemIds() {
-        return (Collection<I>)super.getItemIds();
+    public List<?> getItemIds() {
+        return super.getItemIds();
     }
 
     @Override

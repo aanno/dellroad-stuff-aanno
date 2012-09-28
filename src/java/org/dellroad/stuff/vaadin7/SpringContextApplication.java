@@ -7,8 +7,8 @@
 
 package org.dellroad.stuff.vaadin7;
 
-import com.vaadin.Application;
 import com.vaadin.server.VaadinSession;
+import com.vaadin.ui.UI;
 
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 
@@ -34,7 +34,7 @@ public class SpringContextApplication extends org.dellroad.stuff.vaadin7.BaseSpr
 
     @Override
     public void showError(String title, String description) {
-        ContextApplication.showError(this.getRoots(), this.getNotificationDelay(), title, description);
+        ContextApplication.showError(UI.getCurrent(), this.getNotificationDelay(), title, description);
     }
 
     @Override

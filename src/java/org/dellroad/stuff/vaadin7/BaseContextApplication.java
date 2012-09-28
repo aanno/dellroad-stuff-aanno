@@ -7,15 +7,9 @@
 
 package org.dellroad.stuff.vaadin7;
 
-import com.vaadin.Application;
-import com.vaadin.terminal.Terminal;
-import com.vaadin.terminal.gwt.server.HttpServletRequestListener;
-import com.vaadin.ui.Window;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.net.SocketException;
 import java.util.EventObject;
 import java.util.HashSet;
 import java.util.List;
@@ -25,11 +19,16 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.vaadin.server.Page;
+import com.vaadin.server.VaadinServlet;
+import com.vaadin.ui.Notification;
 
 /**
  * {@link Application} subclass that provides some basic infrastructure for Vaadin applications:
@@ -44,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * @since 1.0.134
  */
 @SuppressWarnings("serial")
-public abstract class BaseContextApplication extends Application implements Executor, HttpServletRequestListener {
+public abstract class BaseContextApplication extends VaadinServlet implements Executor {
 
     /**
      * Default notification linger time for error notifications (in milliseconds): Value is {@value}ms.
@@ -69,10 +68,12 @@ public abstract class BaseContextApplication extends Application implements Exec
      * <p>
      * The implementation in {@link BaseContextApplication} delegates to {@link #initApplication}.
      * </p>
+     * @throws ServletException 
      */
     @Override
-    public final void init() {
-
+    public final void init() throws ServletException {
+    	super.init();
+    	
         // Set current application
         CURRENT_APPLICATION.set(this);
 
@@ -103,7 +104,10 @@ public abstract class BaseContextApplication extends Application implements Exec
      * <p>
      * The implementation in {@link BaseContextApplication} logs the error and displays in on the
      * user's screen via {@link #showError(String, Throwable)}.
+     * 
+     * TODO: handleServiceException ???
      */
+    /*
     @Override
     public void terminalError(Terminal.ErrorEvent event) {
 
@@ -119,22 +123,18 @@ public abstract class BaseContextApplication extends Application implements Exec
         this.showError("Internal Error", "" + t);
         this.log.error("error within Vaadin operation", t);
     }
+     */
 
     /**
      * Display an error message to the user.
      */
     public void showError(String title, String description) {
-
-        // Get window
-        Window window = this.getMainWindow();
-        if (window == null)
-            return;
-
         // Show error
-        Window.Notification notification = new Window.Notification(title, description, Window.Notification.TYPE_ERROR_MESSAGE);
+        Notification notification = new Notification(title, description, Notification.TYPE_ERROR_MESSAGE);
         notification.setStyleName("warning");
         notification.setDelayMsec(this.getNotificationDelay());
-        window.showNotification(notification);
+        // window.showNotification(notification);
+        notification.show(Page.getCurrent());
     }
 
     /**
@@ -232,6 +232,15 @@ public abstract class BaseContextApplication extends Application implements Exec
         this.invoke(action);
     }
 
+    @Override
+    protected void service(HttpServletRequest request,
+            HttpServletResponse response) throws ServletException, IOException {
+    	
+    	onRequestStart(request, response);
+    	super.service(request, response);
+    	onRequestEnd(request, response);
+    }
+    
     /**
      * Handle the start of a request.
      *
@@ -239,8 +248,7 @@ public abstract class BaseContextApplication extends Application implements Exec
      * The implementation in {@link BaseContextApplication} delegates to {@link #doOnRequestStart}.
      * </p>
      */
-    @Override
-    public final void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
+    protected final void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
         BaseContextApplication.CURRENT_APPLICATION.set(this);
         BaseContextApplication.CURRENT_REQUEST.set(request);
         BaseContextApplication.CURRENT_RESPONSE.set(response);
@@ -254,8 +262,7 @@ public abstract class BaseContextApplication extends Application implements Exec
      * The implementation in {@link BaseContextApplication} delegates to {@link #doOnRequestEnd}.
      * </p>
      */
-    @Override
-    public final void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
+    protected final void onRequestEnd(HttpServletRequest request, HttpServletResponse response) {
         try {
             this.doOnRequestEnd(request, response);
         } finally {
@@ -392,10 +399,10 @@ public abstract class BaseContextApplication extends Application implements Exec
      * </p>
      */
     @Override
-    public void close() {
+    public void destroy() {
 
         // Invoke superclass
-        super.close();
+        super.destroy();
 
         // Notify listeners
         CloseEvent closeEvent = new CloseEvent(this);

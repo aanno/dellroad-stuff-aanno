@@ -7,8 +7,6 @@
 
 package org.dellroad.stuff.vaadin7;
 
-import com.vaadin.Application;
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serializable;

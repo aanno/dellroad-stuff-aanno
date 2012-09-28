@@ -10,6 +10,7 @@ package org.dellroad.stuff.vaadin7;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 
+import org.dellroad.stuff.vaadin.VaadinConfigurableObject;
 import org.dellroad.stuff.spring.AbstractConfigurableAspect;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.aspectj.AbstractDependencyInjectionAspect;

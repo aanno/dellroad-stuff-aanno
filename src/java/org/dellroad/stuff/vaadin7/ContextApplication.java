@@ -7,7 +7,6 @@
 
 package org.dellroad.stuff.vaadin7;
 
-import com.vaadin.Application;
 import com.vaadin.server.VaadinSession;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.UI;
@@ -36,19 +35,10 @@ public class ContextApplication extends org.dellroad.stuff.vaadin7.BaseContextAp
 
     @Override
     public void showError(String title, String description) {
-        ContextApplication.showError(this.getRoots(), this.getNotificationDelay(), title, description);
+        ContextApplication.showError(UI.getCurrent(), this.getNotificationDelay(), title, description);
     }
 
-    static void showError(Collection<UI> roots, int notificationDelay, String title, String description) {
-
-        // Get window
-        UI root = UI.getCurrent();
-        if (root == null) {
-            if (roots.isEmpty())
-                return;
-            root = roots.iterator().next();
-        }
-
+    static void showError(UI root, int notificationDelay, String title, String description) {
         // Show error
         Notification notification = new Notification(title, description, Notification.TYPE_ERROR_MESSAGE);
         notification.setStyleName("warning");
