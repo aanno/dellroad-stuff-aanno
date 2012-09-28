@@ -4,6 +4,6 @@
 	<classpathentry kind="src" path="src/test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.ajdt.core.ASPECTJRT_CONTAINER"/>
-	<classpathentry kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?project=dellroad-stuff-read-only&amp;ivyXmlPath=src%2Fivy%2Fivy.xml&amp;confs=*&amp;ivySettingsPath=%24%7Bworkspace_loc%3Adellroad-stuff-read-only%2Fsrc%2Fbuild%2Fivysettings.xml%7D&amp;loadSettingsOnDemand=false&amp;propertyFiles=&amp;sourceTypes=source&amp;javadocTypes=javadoc&amp;sourceSuffixes=-source%2C-sources%2C-src&amp;javadocSuffixes=-javadoc%2C-javadocs%2C-doc%2C-docs&amp;mapIfOnlyOneSource=true&amp;mapIfOnlyOneJavadoc=true"/>
+	<classpathentry kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?project=dellroad-stuff-read-only&amp;ivyXmlPath=src%2Fivy%2Fivy.xml&amp;confs=build%2Cbuild-vaadin7%2Cjibx-bind%2Cvaadin7%2Ctest&amp;ivySettingsPath=%24%7Bworkspace_loc%3Adellroad-stuff-read-only%2Fsrc%2Fbuild%2Fivysettings.xml%7D&amp;loadSettingsOnDemand=false&amp;propertyFiles=&amp;sourceTypes=source&amp;javadocTypes=javadoc&amp;sourceSuffixes=-source%2C-sources%2C-src&amp;javadocSuffixes=-javadoc%2C-javadocs%2C-doc%2C-docs&amp;mapIfOnlyOneSource=true&amp;mapIfOnlyOneJavadoc=true"/>
 	<classpathentry kind="output" path="build/classes-eclipse"/>
 </classpath>
