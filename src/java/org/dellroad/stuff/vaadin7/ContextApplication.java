@@ -8,18 +8,19 @@
 package org.dellroad.stuff.vaadin7;
 
 import com.vaadin.Application;
+import com.vaadin.server.VaadinSession;
 import com.vaadin.ui.Notification;
-import com.vaadin.ui.Root;
+import com.vaadin.ui.UI;
 
 import java.util.Collection;
 
 /**
- * Vaadin 7 version of {@link org.dellroad.stuff.vaadin.ContextApplication}.
+ * Vaadin 7 version of {@link org.dellroad.stuff.vaadin7.BaseContextApplication}.
  *
- * @see org.dellroad.stuff.vaadin.ContextApplication
+ * @see org.dellroad.stuff.vaadin7.BaseContextApplication
  */
 @SuppressWarnings("serial")
-public class ContextApplication extends org.dellroad.stuff.vaadin.ContextApplication {
+public class ContextApplication extends org.dellroad.stuff.vaadin7.BaseContextApplication {
 
     /**
      * Initialize the application. In Vaadin 7 overriding this method is optional.
@@ -38,10 +39,10 @@ public class ContextApplication extends org.dellroad.stuff.vaadin.ContextApplica
         ContextApplication.showError(this.getRoots(), this.getNotificationDelay(), title, description);
     }
 
-    static void showError(Collection<Root> roots, int notificationDelay, String title, String description) {
+    static void showError(Collection<UI> roots, int notificationDelay, String title, String description) {
 
         // Get window
-        Root root = Root.getCurrent();
+        UI root = UI.getCurrent();
         if (root == null) {
             if (roots.isEmpty())
                 return;
@@ -57,14 +58,14 @@ public class ContextApplication extends org.dellroad.stuff.vaadin.ContextApplica
 
     @Override
     public void invoke(Runnable action) {
-        final Application previous = Application.getCurrent();
+        final VaadinSession previous = VaadinSession.getCurrent();
         if (previous != null && previous != this)
             throw new IllegalStateException("there is already a current application for this thread (according to Vaadin)");
-        Application.setCurrent(this);
+        VaadinSession.setCurrent(this);
         try {
             super.invoke(action);
         } finally {
-            Application.setCurrent(previous);
+        	VaadinSession.setCurrent(previous);
         }
     }
 }
