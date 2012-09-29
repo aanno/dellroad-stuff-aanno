@@ -219,6 +219,8 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
             synchronized (this) {
                 action.run();
             }
+        } catch (Exception e) {
+        	log.error("invoke failed: " + e, e);
         } finally {
             BaseContextApplication.CURRENT_APPLICATION.set(previous);
         }

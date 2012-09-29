@@ -142,6 +142,8 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
      * the string from {@link #getApplicationName}, and {@code .xml} as a suffix.
      */
     public static final String VAADIN_CONTEXT_LOCATION_PARAMETER = "vaadinContextConfigLocation";
+    
+    public static final String VAADIN_APPLICATION = "application";
 
     private static final AtomicLong UNIQUE_INDEX = new AtomicLong();
 
@@ -287,13 +289,18 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
         //context.setServletConfig(??);
         this.context.setNamespace(this.getApplicationName());
 
-        // Set explicit config location(s) if set by parameter
-        // ???
-        /*
-        String configLocationValue = this.getProperty(VAADIN_CONTEXT_LOCATION_PARAMETER);
-        if (configLocationValue != null)
+        // Set explicit config location(s) if set by web.xml init-param
+        String configLocationValue = this.getServletContext().getInitParameter(VAADIN_CONTEXT_LOCATION_PARAMETER);
+        if (configLocationValue == null) {
+        	configLocationValue = this.getServletContext().getInitParameter(VAADIN_APPLICATION);
+        }
+        if (configLocationValue == null) {
+        	configLocationValue = getApplicationName();
+        }
+        // Set config location from application name (if there is no web.xml init-param
+        if (configLocationValue != null) {
             this.context.setConfigLocation(configLocationValue);
-         */
+        }
 
         // Register listener so we can notify subclass on refresh events
         this.context.addApplicationListener(new SourceFilteringListener(this.context, new RefreshListener()));
