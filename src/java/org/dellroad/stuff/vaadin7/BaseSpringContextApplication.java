@@ -290,9 +290,9 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
         this.context.setNamespace(this.getApplicationName());
 
         // Set explicit config location(s) if set by web.xml init-param
-        String configLocationValue = this.getServletContext().getInitParameter(VAADIN_CONTEXT_LOCATION_PARAMETER);
+        String configLocationValue = this.getInitParameter(VAADIN_CONTEXT_LOCATION_PARAMETER);
         if (configLocationValue == null) {
-        	configLocationValue = this.getServletContext().getInitParameter(VAADIN_APPLICATION);
+        	configLocationValue = this.getInitParameter(VAADIN_APPLICATION);
         }
         if (configLocationValue == null) {
         	configLocationValue = getApplicationName();

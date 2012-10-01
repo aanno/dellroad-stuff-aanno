@@ -27,11 +27,14 @@ import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpRequest;
 
 import com.vaadin.server.Page;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.server.VaadinSession;
+import com.vaadin.shared.ui.ui.UIConstants;
 import com.vaadin.ui.Notification;
+import com.vaadin.ui.UI;
 
 /**
  * {@link Application} subclass that provides some basic infrastructure for Vaadin applications:
@@ -375,6 +378,16 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
         if (app != null)
             return app;
         throw new IllegalStateException("no current application found");
+    }
+    
+    public static UI getUI() {
+    	final HttpServletRequest request = CURRENT_REQUEST.get();
+    	// Get the VaadinSession
+    	final VaadinSession session = (VaadinSession) CURRENT_REQUEST.get().getAttribute(VaadinSession.class.getName());
+        // Get UI id from the request
+        String uiIdString = request.getParameter(UIConstants.UI_ID_PARAMETER);
+        int uiId = Integer.parseInt(uiIdString);
+        return session.getUIById(uiId);
     }
 
     /**
