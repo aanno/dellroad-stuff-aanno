@@ -81,11 +81,14 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
      * </p>
      * @throws ServletException 
      */
-    @Override
-    public final void init() throws ServletException {
-    	super.init();
+    public final void initSession(HttpSession session) {
+    	final Integer uiId = getUIId();
+    	if (uiId != null) {
+    		// UI is already initialized
+    		return;
+    	}
     	
-        // Set current application
+    	// Set current application
         CURRENT_APPLICATION.set(this);
 
         // Create executor service
@@ -94,7 +97,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
         // Initialize application
         boolean initialized = false;
         try {
-            this.initApplication();
+            this.initApplication(session);
             initialized = true;
         } finally {
             if (!initialized)
@@ -105,7 +108,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     /**
      * Initialize the application. Sub-classes of {@link BaseContextApplication} must implement this method.
      */
-    protected abstract void initApplication();
+    protected abstract void initApplication(HttpSession session);
 
 // Error handling
 
@@ -290,6 +293,8 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
         session.setAttribute(SESSION_ATTRIBUTE, SESSION_NUMBER.incrementAndGet());
         BaseContextApplication.CURRENT_SESSION.set(session);
         
+        initSession(session);
+        
         this.doOnRequestStart(request, response);
     }
 
@@ -382,12 +387,40 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     
     public static UI getUI() {
     	final HttpServletRequest request = CURRENT_REQUEST.get();
+    	return getUI(request);
+    }
+    
+    public static UI getUI(HttpServletRequest request) {
     	// Get the VaadinSession
-    	final VaadinSession session = (VaadinSession) CURRENT_REQUEST.get().getAttribute(VaadinSession.class.getName());
-        // Get UI id from the request
-        String uiIdString = request.getParameter(UIConstants.UI_ID_PARAMETER);
-        int uiId = Integer.parseInt(uiIdString);
+    	final VaadinSession session = (VaadinSession) request.getAttribute(VaadinSession.class.getName());
+    	final Integer uiId = getUIId();
+    	if (uiId == null) {
+    		return null;
+    	}
         return session.getUIById(uiId);
+    }
+    
+    public static Integer getUIId() {
+    	final HttpServletRequest request = CURRENT_REQUEST.get();
+    	return getUIId(request);
+    }
+    
+    public static Integer getUIId(HttpServletRequest request) {
+    	if (request == null) {
+    		return null;
+    	}
+    	// Get the VaadinSession
+    	final VaadinSession session = (VaadinSession) request.getAttribute(VaadinSession.class.getName());
+    	if (session == null) {
+    		return null;
+    	}
+        // Get UI id from the request
+        final String uiIdString = request.getParameter(UIConstants.UI_ID_PARAMETER);
+        if (uiIdString == null) {
+        	return null;
+        }
+        final int uiId = Integer.parseInt(uiIdString);
+        return uiId;
     }
 
     /**

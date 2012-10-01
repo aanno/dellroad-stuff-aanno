@@ -9,11 +9,18 @@ package org.dellroad.stuff.vaadin7;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -30,6 +37,7 @@ import org.springframework.web.context.support.XmlWebApplicationContext;
 import com.vaadin.server.VaadinService;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.server.VaadinSession;
+import com.vaadin.shared.ui.ui.UIConstants;
 import com.vaadin.ui.UI;
 
 /**
@@ -147,13 +155,43 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
 
     private static final AtomicLong UNIQUE_INDEX = new AtomicLong();
 
-    private transient ConfigurableWebApplicationContext context;
+    private transient ThreadLocal<ConfigurableWebApplicationContext> currentContext = new ThreadLocal<ConfigurableWebApplicationContext>();
+    
+    /**
+     * UI id -> ConfigurableWebApplicationContext.
+     */
+    private transient Map<Integer,ConfigurableWebApplicationContext> uiId2Context = 
+    		new ConcurrentHashMap<Integer, ConfigurableWebApplicationContext>();
+    
+    public BaseSpringContextApplication() {
+    }
 
+    @Override
+    protected final void doOnRequestStart(HttpServletRequest request, HttpServletResponse response) {
+    	
+    }
+
+    @Override
+    protected final void doOnRequestEnd(HttpServletRequest request, HttpServletResponse response) {
+    	final Integer uiId = getUIId(request);
+    	if (uiId != null) {
+    		setApplicationContext(uiId, currentContext.get());
+    	
+    		// Get notified of application shutdown so we can shut down the context as well
+    		this.addListener(new ContextCloseListener(uiId));
+    	}
+		currentContext.set(null);
+    }
+    
+    private void setApplicationContext(int uiId, ConfigurableWebApplicationContext context) {
+    	uiId2Context.put(uiId, context);
+    }
+    
     /**
      * Get this instance's associated Spring application context.
      */
-    public ConfigurableWebApplicationContext getApplicationContext() {
-        return this.context;
+    public ConfigurableWebApplicationContext getApplicationContext(int uiId) {
+        return uiId2Context.get(uiId2Context);
     }
 
     /**
@@ -178,11 +216,11 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
      * After initializing the associated Spring application context, this method delegates to {@link #initSpringApplication}.
      */
     @Override
-    protected final void initApplication() {
-
+    protected final void initApplication(HttpSession session) {
         // Load the context
-        this.loadContext();
-
+        final ConfigurableWebApplicationContext context = this.loadContext();
+        currentContext.set(context);
+        
         // Initialize subclass
         this.initSpringApplication(context);
     }
@@ -259,13 +297,14 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
 
 // ApplicationContext setup
 
-    private void loadContext() {
-
+    private ConfigurableWebApplicationContext loadContext() {
+    	ConfigurableWebApplicationContext context;
+    	
         // Logging
         this.log.info("loading application context for Vaadin application " + this.getApplicationName());
 
         // Sanity check
-        if (this.context != null)
+        if (currentContext.get() != null)
             throw new IllegalStateException("context already loaded");
 
         // Find the application context associated with the servlet; it will be the parent
@@ -280,14 +319,14 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
         WebApplicationContext parent = WebApplicationContextUtils.getWebApplicationContext(servletContext);
 
         // Create and configure a new application context for this Application instance
-        this.context = new XmlWebApplicationContext();
-        this.context.setId(ConfigurableWebApplicationContext.APPLICATION_CONTEXT_ID_PREFIX
+        context = new XmlWebApplicationContext();
+        context.setId(ConfigurableWebApplicationContext.APPLICATION_CONTEXT_ID_PREFIX
           + servletContext.getContextPath() + "/" + this.getApplicationName() + "-"
           + BaseSpringContextApplication.UNIQUE_INDEX.incrementAndGet());
-        this.context.setParent(parent);
-        this.context.setServletContext(servletContext);
+        context.setParent(parent);
+        context.setServletContext(servletContext);
         //context.setServletConfig(??);
-        this.context.setNamespace(this.getApplicationName());
+        context.setNamespace(this.getApplicationName());
 
         // Set explicit config location(s) if set by web.xml init-param
         String configLocationValue = this.getInitParameter(VAADIN_CONTEXT_LOCATION_PARAMETER);
@@ -299,14 +338,14 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
         }
         // Set config location from application name (if there is no web.xml init-param
         if (configLocationValue != null) {
-            this.context.setConfigLocation(configLocationValue);
+            context.setConfigLocation(configLocationValue);
         }
 
         // Register listener so we can notify subclass on refresh events
-        this.context.addApplicationListener(new SourceFilteringListener(this.context, new RefreshListener()));
+        context.addApplicationListener(new SourceFilteringListener(context, new RefreshListener()));
 
         // Register this instance as an implicitly resolvable dependency
-        this.context.addBeanFactoryPostProcessor(new BeanFactoryPostProcessor() {
+        context.addBeanFactoryPostProcessor(new BeanFactoryPostProcessor() {
             @Override
             public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
                 beanFactory.registerResolvableDependency(VaadinServlet.class, BaseSpringContextApplication.this);
@@ -317,17 +356,26 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
         this.postProcessWebApplicationContext(context);
 
         // Refresh context
-        this.context.refresh();
+        context.refresh();
 
-        // Get notified of application shutdown so we can shut down the context as well
-        this.addListener(new ContextCloseListener());
+        return context;
     }
 
 // Serialization
 
     private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
         input.defaultReadObject();
-        this.loadContext();
+        currentContext = new ThreadLocal<ConfigurableWebApplicationContext>();
+        final Set<Integer> uiIds = (Set<Integer>) input.readObject();
+        for (Integer uiId: uiIds) {
+        	final ConfigurableWebApplicationContext context = loadContext();
+        	setApplicationContext(uiId, context);
+        }
+    }
+    
+    private void writeObject(ObjectOutputStream out) throws IOException {
+    	out.defaultWriteObject();
+    	out.writeObject(new HashSet<Integer>(uiId2Context.keySet()));
     }
 
 // Nested classes
@@ -342,11 +390,18 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
 
     // My close listener
     private class ContextCloseListener implements CloseListener, Serializable {
+    	
+    	private final int uiId;
+    	
+    	private ContextCloseListener(int uiId) {
+    		this.uiId = uiId;
+    	}
+    	
         @Override
         public void applicationClosed(CloseEvent closeEvent) {
             BaseSpringContextApplication.this.log.info("closing application context associated with Vaadin application "
               + BaseSpringContextApplication.this.getApplicationName());
-            BaseSpringContextApplication.this.context.close();
+            BaseSpringContextApplication.this.getApplicationContext(uiId).close();
             BaseSpringContextApplication.this.destroySpringApplication();
         }
     }
