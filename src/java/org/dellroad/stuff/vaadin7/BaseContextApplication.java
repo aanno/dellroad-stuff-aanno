@@ -62,14 +62,17 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     private static final AtomicInteger SESSION_NUMBER = new AtomicInteger();
 
     private static final ThreadLocal<BaseContextApplication> CURRENT_CONTEXT = new ThreadLocal<BaseContextApplication>();
+    private static final ThreadLocal<UI> CURRENT_UI = new ThreadLocal<UI>();
     private static final ThreadLocal<HttpServletRequest> CURRENT_REQUEST = new ThreadLocal<HttpServletRequest>();
     private static final ThreadLocal<HttpServletResponse> CURRENT_RESPONSE = new ThreadLocal<HttpServletResponse>();
     private static final ThreadLocal<HttpSession> CURRENT_SESSION = new ThreadLocal<HttpSession>();
-
+    
+    // 
+    
     protected final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private final HashSet<CloseListener> closeListeners = new HashSet<CloseListener>();
-
+    
     private transient volatile ExecutorService executorService;
 
 // Initialization
@@ -307,7 +310,8 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
             BaseContextApplication.CURRENT_CONTEXT.remove();
             BaseContextApplication.CURRENT_REQUEST.remove();
             BaseContextApplication.CURRENT_RESPONSE.remove();
-            BaseContextApplication.CURRENT_SESSION.remove();        
+            BaseContextApplication.CURRENT_SESSION.remove();    
+            setCurrentUI(null);
         }
     }
 
@@ -393,6 +397,14 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     		return null;
     	}
         return session.getUIById(uiId);
+    }
+    
+    public static UI getCurrentUI() {
+    	return CURRENT_UI.get();
+    }
+    
+    static void setCurrentUI(UI ui) {
+    	CURRENT_UI.set(ui);
     }
     
     public static UI getUI(HttpServletRequest request, int uiId) {

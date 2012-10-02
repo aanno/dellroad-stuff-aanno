@@ -36,6 +36,7 @@ import org.springframework.web.context.support.XmlWebApplicationContext;
 
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
+import com.vaadin.server.VaadinSession;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.UI.CleanupEvent;
 
@@ -215,32 +216,40 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     protected final void initApplication(HttpServletRequest request) {
     	final Integer uiId = getUIId(request);
     	if (uiId != null) {
-    		ConfigurableWebApplicationContext context = uiId2Context.get(uiId);
-    		if (context != null) {
-    			// context already initialized
-    			return;
+    		UI ui = getCurrentUI();
+    		if (ui == null) {
+    			ui = VaadinSession.getCurrent().getUIById(uiId);
     		}
-    	
-    		// Load the context
-            context = this.loadContext();
-            
-            // Initialize subclass
-            this.initSpringApplication(context);
-            
-    		setApplicationContext(uiId, context);
-    	
-    		// Get notified of context shutdown so we can shut down the context as well
-    		final ContextCloseListener listener = new ContextCloseListener(uiId);
-    		this.addListener(listener);
-    		
-    		// Get notified of UI shutdown so we can shut down the context as well
-    		final UI ui = getUI(request, uiId);
-    		ui.addCleanupListener(listener);
-    		
-            log.info("context created: " + context + "for uiId " + uiId 
-            		+ ", new UI-context size: " + uiId2Context.size());
-            return;
+    		initApplication(ui);
     	}
+    }
+    
+    protected final void initApplication(UI ui) {
+    	final int uiId = ui.getUIId();
+		ConfigurableWebApplicationContext context = uiId2Context.get(uiId);
+		if (context != null) {
+			setCurrentUI(ui);
+			return;
+		}
+	
+		// Load the context
+        context = this.loadContext();
+        
+        // Initialize subclass
+        this.initSpringApplication(context);
+        
+		setApplicationContext(uiId, context);
+	
+		// Get notified of context shutdown so we can shut down the context as well
+		final ContextCloseListener listener = new ContextCloseListener(uiId);
+		this.addListener(listener);
+		
+		setCurrentUI(ui);
+		ui.addCleanupListener(listener);
+		
+        log.info("context created: " + context + "for uiId " + uiId 
+        		+ ", new UI-context size: " + uiId2Context.size());
+        return;
     }
 
     /**

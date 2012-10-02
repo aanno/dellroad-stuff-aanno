@@ -62,8 +62,9 @@ public abstract class SpringUI extends UI {
 
 	@Override
 	protected final void init(VaadinRequest request) {
+		BaseSpringContextApplication.setCurrentUI(this);
 		final BaseSpringContextApplication app = BaseSpringContextApplication.get();
-		app.initApplication(ContextApplication.currentRequest());
+		app.initApplication(this);
 		initSpringUI(request, app.getApplicationContext(getUIId()));
 	}
 
