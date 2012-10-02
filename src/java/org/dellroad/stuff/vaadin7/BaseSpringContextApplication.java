@@ -155,8 +155,6 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
 
     private static final AtomicLong UNIQUE_INDEX = new AtomicLong();
 
-    private transient ThreadLocal<ConfigurableWebApplicationContext> currentContext = new ThreadLocal<ConfigurableWebApplicationContext>();
-    
     /**
      * UI id -> ConfigurableWebApplicationContext.
      */
@@ -173,14 +171,6 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
 
     @Override
     protected final void doOnRequestEnd(HttpServletRequest request, HttpServletResponse response) {
-    	final Integer uiId = getUIId(request);
-    	if (uiId != null) {
-    		setApplicationContext(uiId, currentContext.get());
-    	
-    		// Get notified of application shutdown so we can shut down the context as well
-    		this.addListener(new ContextCloseListener(uiId));
-    	}
-		currentContext.set(null);
     }
     
     private void setApplicationContext(int uiId, ConfigurableWebApplicationContext context) {
@@ -216,13 +206,26 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
      * After initializing the associated Spring application context, this method delegates to {@link #initSpringApplication}.
      */
     @Override
-    protected final void initApplication(HttpSession session) {
-        // Load the context
-        final ConfigurableWebApplicationContext context = this.loadContext();
-        currentContext.set(context);
-        
-        // Initialize subclass
-        this.initSpringApplication(context);
+    protected final void initApplication(HttpServletRequest request) {
+    	final Integer uiId = getUIId(request);
+    	if (uiId != null) {
+    		ConfigurableWebApplicationContext context = uiId2Context.get(uiId);
+    		if (context != null) {
+    			// context already initialized
+    			return;
+    		}
+    	
+    		// Load the context
+            context = this.loadContext();
+            
+            // Initialize subclass
+            this.initSpringApplication(context);
+            
+    		setApplicationContext(uiId, context);
+    	
+    		// Get notified of application shutdown so we can shut down the context as well
+    		this.addListener(new ContextCloseListener(uiId));
+    	}
     }
 
     /**
@@ -303,10 +306,6 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
         // Logging
         this.log.info("loading application context for Vaadin application " + this.getApplicationName());
 
-        // Sanity check
-        if (currentContext.get() != null)
-            throw new IllegalStateException("context already loaded");
-
         // Find the application context associated with the servlet; it will be the parent
         ServletContext servletContext;
         HttpServletRequest request = BaseContextApplication.currentRequest();
@@ -365,7 +364,6 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
 
     private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
         input.defaultReadObject();
-        currentContext = new ThreadLocal<ConfigurableWebApplicationContext>();
         final Set<Integer> uiIds = (Set<Integer>) input.readObject();
         for (Integer uiId: uiIds) {
         	final ConfigurableWebApplicationContext context = loadContext();

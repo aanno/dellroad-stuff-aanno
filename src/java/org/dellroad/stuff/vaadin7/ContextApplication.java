@@ -7,13 +7,11 @@
 
 package org.dellroad.stuff.vaadin7;
 
+import javax.servlet.http.HttpServletRequest;
+
 import com.vaadin.server.VaadinSession;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.UI;
-
-import java.util.Collection;
-
-import javax.servlet.http.HttpSession;
 
 /**
  * Vaadin 7 version of {@link org.dellroad.stuff.vaadin7.BaseContextApplication}.
@@ -30,7 +28,7 @@ public class ContextApplication extends org.dellroad.stuff.vaadin7.BaseContextAp
      * The implementation in {@link ContextApplication} does nothing.
      */
     @Override
-    protected void initApplication(HttpSession session) {
+    protected void initApplication(HttpServletRequest request) {
     }
 
 // Error handling

@@ -60,7 +60,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     
     private static final AtomicInteger SESSION_NUMBER = new AtomicInteger();
 
-    private static final ThreadLocal<BaseContextApplication> CURRENT_APPLICATION = new ThreadLocal<BaseContextApplication>();
+    private static final ThreadLocal<BaseContextApplication> CURRENT_CONTEXT = new ThreadLocal<BaseContextApplication>();
     private static final ThreadLocal<HttpServletRequest> CURRENT_REQUEST = new ThreadLocal<HttpServletRequest>();
     private static final ThreadLocal<HttpServletResponse> CURRENT_RESPONSE = new ThreadLocal<HttpServletResponse>();
     private static final ThreadLocal<HttpSession> CURRENT_SESSION = new ThreadLocal<HttpSession>();
@@ -81,15 +81,9 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
      * </p>
      * @throws ServletException 
      */
-    public final void initSession(HttpSession session) {
-    	final Integer uiId = getUIId();
-    	if (uiId != null) {
-    		// UI is already initialized
-    		return;
-    	}
-    	
-    	// Set current application
-        CURRENT_APPLICATION.set(this);
+    public final void initSession(HttpServletRequest request) {
+    	// Set current context
+        CURRENT_CONTEXT.set(this);
 
         // Create executor service
         this.executorService = Executors.newSingleThreadExecutor();
@@ -97,7 +91,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
         // Initialize application
         boolean initialized = false;
         try {
-            this.initApplication(session);
+            this.initApplication(request);
             initialized = true;
         } finally {
             if (!initialized)
@@ -108,7 +102,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     /**
      * Initialize the application. Sub-classes of {@link BaseContextApplication} must implement this method.
      */
-    protected abstract void initApplication(HttpSession session);
+    protected abstract void initApplication(HttpServletRequest request);
 
 // Error handling
 
@@ -217,10 +211,10 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
      * @see #invokeLater invokeLater()
      */
     public void invoke(Runnable action) {
-        final BaseContextApplication previous = BaseContextApplication.CURRENT_APPLICATION.get();
+        final BaseContextApplication previous = BaseContextApplication.CURRENT_CONTEXT.get();
         if (previous != null && previous != this)
             throw new IllegalStateException("there is already a current application for this thread");
-        BaseContextApplication.CURRENT_APPLICATION.set(this);
+        BaseContextApplication.CURRENT_CONTEXT.set(this);
         try {
             synchronized (this) {
                 action.run();
@@ -228,7 +222,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
         } catch (Exception e) {
         	log.error("invoke failed: " + e, e);
         } finally {
-            BaseContextApplication.CURRENT_APPLICATION.set(previous);
+            BaseContextApplication.CURRENT_CONTEXT.set(previous);
         }
     }
 
@@ -285,7 +279,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
      * </p>
      */
     protected final void onRequestStart(HttpServletRequest request, HttpServletResponse response) {
-        BaseContextApplication.CURRENT_APPLICATION.set(this);
+        BaseContextApplication.CURRENT_CONTEXT.set(this);
         BaseContextApplication.CURRENT_REQUEST.set(request);
         BaseContextApplication.CURRENT_RESPONSE.set(response);
         
@@ -293,7 +287,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
         session.setAttribute(SESSION_ATTRIBUTE, SESSION_NUMBER.incrementAndGet());
         BaseContextApplication.CURRENT_SESSION.set(session);
         
-        initSession(session);
+        initSession(request);
         
         this.doOnRequestStart(request, response);
     }
@@ -309,7 +303,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
         try {
             this.doOnRequestEnd(request, response);
         } finally {
-            BaseContextApplication.CURRENT_APPLICATION.remove();
+            BaseContextApplication.CURRENT_CONTEXT.remove();
             BaseContextApplication.CURRENT_REQUEST.remove();
             BaseContextApplication.CURRENT_RESPONSE.remove();
             BaseContextApplication.CURRENT_SESSION.remove();        
@@ -350,7 +344,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
      * @see #invoke
      */
     public static BaseContextApplication currentApplication() {
-        return BaseContextApplication.CURRENT_APPLICATION.get();
+        return BaseContextApplication.CURRENT_CONTEXT.get();
     }
 
     /**
