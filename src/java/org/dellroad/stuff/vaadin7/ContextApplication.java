@@ -30,6 +30,10 @@ public class ContextApplication extends org.dellroad.stuff.vaadin7.BaseContextAp
     @Override
     protected void initApplication(HttpServletRequest request) {
     }
+    
+    @Override
+    public void close() {
+    }
 
 // Error handling
 

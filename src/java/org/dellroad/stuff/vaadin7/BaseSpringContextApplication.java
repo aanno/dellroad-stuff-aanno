@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
+import org.dellroad.stuff.vaadin.ContextApplication.CloseListener;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -34,11 +34,9 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
-import com.vaadin.server.VaadinService;
 import com.vaadin.server.VaadinServlet;
-import com.vaadin.server.VaadinSession;
-import com.vaadin.shared.ui.ui.UIConstants;
 import com.vaadin.ui.UI;
+import com.vaadin.ui.UI.CleanupEvent;
 
 /**
  * Vaadin application implementation that manages an associated Spring {@link WebApplicationContext}.
@@ -185,6 +183,13 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     }
 
     /**
+     * Get this instance's associated Spring application context.
+     */
+    public ConfigurableWebApplicationContext removeApplicationContext(int uiId) {
+        return uiId2Context.remove(uiId2Context);
+    }
+
+    /**
      * Get the {@link BaseSpringContextApplication} instance associated with the current thread or throw an exception if there is none.
      *
      * <p>
@@ -223,8 +228,15 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
             
     		setApplicationContext(uiId, context);
     	
-    		// Get notified of application shutdown so we can shut down the context as well
-    		this.addListener(new ContextCloseListener(uiId));
+    		// Get notified of context shutdown so we can shut down the context as well
+    		final ContextCloseListener listener = new ContextCloseListener(uiId);
+    		this.addListener(listener);
+    		
+    		// Get notified of UI shutdown so we can shut down the context as well
+    		final UI ui = getUI(request, uiId);
+    		ui.addCleanupListener(listener);
+    		
+            log.info("context created: " + context + ", new UI-context size: " + uiId2Context.size());
     	}
     }
 
@@ -236,6 +248,32 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
      */
     protected abstract void initSpringApplication(ConfigurableWebApplicationContext context);
 
+    /**
+     * Close this instance.
+     *
+     * <p>
+     * The implementation in {@link BaseContextApplication} first delegates to the superclass and then
+     * notifies any registered {@link CloseListener}s.
+     * </p>
+     */
+    @Override
+    public void close() {
+    	int uiId = getUIId();
+    	close(uiId);
+    }
+    
+    private void close(int uiId) {
+    	removeApplicationContext(uiId);
+        log.info("closing application context associated with Vaadin ui "
+                + BaseSpringContextApplication.this.getApplicationName() + " " + uiId);
+        final ConfigurableWebApplicationContext context = removeApplicationContext(uiId);
+        if (context != null) {
+        	context.close();
+        }
+        log.info("UI-context size: " + uiId2Context.size());
+        destroySpringApplication();
+    }
+    
     /**
      * Perform any application-specific shutdown work. This will be invoked at shutdown after this Vaadin application and the
      * associated {@link WebApplicationContext} have both been closed.
@@ -387,7 +425,7 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     }
 
     // My close listener
-    private class ContextCloseListener implements CloseListener, Serializable {
+    private class ContextCloseListener implements CloseListener, UI.CleanupListener, Serializable, Cloneable {
     	
     	private final int uiId;
     	
@@ -397,11 +435,14 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     	
         @Override
         public void applicationClosed(CloseEvent closeEvent) {
-            BaseSpringContextApplication.this.log.info("closing application context associated with Vaadin application "
-              + BaseSpringContextApplication.this.getApplicationName());
-            BaseSpringContextApplication.this.getApplicationContext(uiId).close();
-            BaseSpringContextApplication.this.destroySpringApplication();
+        	close(uiId);
         }
+        
+		@Override
+		public void cleanup(CleanupEvent event) {
+			close(uiId);
+		}
+		
     }
 }
 

@@ -7,6 +7,7 @@
 
 package org.dellroad.stuff.vaadin7;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -27,7 +28,6 @@ import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpRequest;
 
 import com.vaadin.server.Page;
 import com.vaadin.server.VaadinServlet;
@@ -49,7 +49,7 @@ import com.vaadin.ui.UI;
  * @since 1.0.134
  */
 @SuppressWarnings("serial")
-public abstract class BaseContextApplication extends VaadinServlet implements Executor {
+public abstract class BaseContextApplication extends VaadinServlet implements Executor, Closeable {
 
     /**
      * Default notification linger time for error notifications (in milliseconds): Value is {@value}ms.
@@ -387,10 +387,16 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     public static UI getUI(HttpServletRequest request) {
     	// Get the VaadinSession
     	final VaadinSession session = (VaadinSession) request.getAttribute(VaadinSession.class.getName());
-    	final Integer uiId = getUIId();
+    	final Integer uiId = getUIId(request);
     	if (uiId == null) {
     		return null;
     	}
+        return session.getUIById(uiId);
+    }
+    
+    public static UI getUI(HttpServletRequest request, int uiId) {
+    	// Get the VaadinSession
+    	final VaadinSession session = (VaadinSession) request.getAttribute(VaadinSession.class.getName());
         return session.getUIById(uiId);
     }
     
@@ -467,7 +473,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
 // Listener stuff
 
     /**
-     * Close this instance.
+     * Destroy this servlet.
      *
      * <p>
      * The implementation in {@link BaseContextApplication} first delegates to the superclass and then
