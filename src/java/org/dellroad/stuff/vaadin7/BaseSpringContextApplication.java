@@ -34,6 +34,7 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
+import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.UI.CleanupEvent;
@@ -236,7 +237,9 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     		final UI ui = getUI(request, uiId);
     		ui.addCleanupListener(listener);
     		
-            log.info("context created: " + context + ", new UI-context size: " + uiId2Context.size());
+            log.info("context created: " + context + "for uiId " + uiId 
+            		+ ", new UI-context size: " + uiId2Context.size());
+            return;
     	}
     }
 
@@ -264,8 +267,8 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     
     private void close(int uiId) {
     	removeApplicationContext(uiId);
-        log.info("closing application context associated with Vaadin ui "
-                + BaseSpringContextApplication.this.getApplicationName() + " " + uiId);
+        log.info("closing application context associated with Vaadin ui "  + " " + uiId
+                + " " + BaseSpringContextApplication.this.getApplicationName());
         final ConfigurableWebApplicationContext context = removeApplicationContext(uiId);
         if (context != null) {
         	context.close();
@@ -435,11 +438,13 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     	
         @Override
         public void applicationClosed(CloseEvent closeEvent) {
+        	log.info("close for uiId " + uiId + " triggered by context close");
         	close(uiId);
         }
         
 		@Override
 		public void cleanup(CleanupEvent event) {
+        	log.info("close for uiId " + uiId + " triggered by UI cleanup");
 			close(uiId);
 		}
 		

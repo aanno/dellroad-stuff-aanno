@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.vaadin.server.Page;
+import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.server.VaadinSession;
 import com.vaadin.shared.ui.ui.UIConstants;
@@ -406,6 +407,34 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     }
     
     public static Integer getUIId(HttpServletRequest request) {
+    	if (request == null) {
+    		return null;
+    	}
+    	// Get the VaadinSession
+    	final VaadinSession session = (VaadinSession) request.getAttribute(VaadinSession.class.getName());
+    	if (session == null) {
+    		return null;
+    	}
+        // Get UI id from the request
+        final String uiIdString = request.getParameter(UIConstants.UI_ID_PARAMETER);
+        if (uiIdString == null) {
+        	return null;
+        }
+        final int uiId = Integer.parseInt(uiIdString);
+        return uiId;
+    }
+    
+    public static UI getUI(VaadinRequest request) {
+    	// Get the VaadinSession
+    	final VaadinSession session = (VaadinSession) request.getAttribute(VaadinSession.class.getName());
+    	final Integer uiId = getUIId(request);
+    	if (uiId == null) {
+    		return null;
+    	}
+        return session.getUIById(uiId);
+    }
+    
+    public static Integer getUIId(VaadinRequest request) {
     	if (request == null) {
     		return null;
     	}
