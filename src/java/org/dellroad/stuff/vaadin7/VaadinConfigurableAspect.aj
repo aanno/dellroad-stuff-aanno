@@ -17,8 +17,6 @@ import org.springframework.beans.factory.wiring.BeanConfigurerSupport;
 import org.springframework.beans.factory.wiring.BeanWiringInfoResolver;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 
-import com.vaadin.ui.UI;
-
 /**
  * Aspect that autowires classes marked with the {@link VaadinConfigurable @VaadinConfigurable} annotation to a
  * {@link BaseSpringContextApplication} application context.
@@ -90,8 +88,7 @@ public aspect VaadinConfigurableAspect extends AbstractConfigurableAspect {
         // ConfigurableWebApplicationContext context = BaseSpringContextApplication.get().getApplicationContext();
         // ConfigurableWebApplicationContext context = BaseSpringContextApplication.get().getApplicationContext(
         // 		BaseSpringContextApplication.getCurrentUI().getUIId());
-    	final ConfigurableWebApplicationContext context = 
-    			((SpringUI) BaseSpringContextApplication.getCurrentUI()).getContext();
+    	final ConfigurableWebApplicationContext context = BaseSpringContextApplication.get().getCurrentlyConstructedContext();
 
         // Logging
         if (this.log.isTraceEnabled())

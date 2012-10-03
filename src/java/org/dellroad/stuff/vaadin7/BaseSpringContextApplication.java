@@ -152,6 +152,9 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     public static final String VAADIN_APPLICATION = "application";
 
     private static final AtomicLong UNIQUE_INDEX = new AtomicLong();
+    
+    private static final ThreadLocal<ConfigurableWebApplicationContext> CURRENTLY_CONSTRUCTED_CONTEXT = 
+    		new ThreadLocal<ConfigurableWebApplicationContext>();
 
     /**
      * UI id -> ConfigurableWebApplicationContext.
@@ -202,6 +205,10 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
      */
     public static BaseSpringContextApplication get() {
         return BaseContextApplication.get(BaseSpringContextApplication.class);
+    }
+    
+    public ConfigurableWebApplicationContext getCurrentlyConstructedContext() {
+    	return CURRENTLY_CONSTRUCTED_CONTEXT.get();
     }
 
     /**
@@ -387,22 +394,28 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
             context.setConfigLocation(configLocationValue);
         }
 
-        // Register listener so we can notify subclass on refresh events
-        context.addApplicationListener(new SourceFilteringListener(context, new RefreshListener()));
+        try {
+        	CURRENTLY_CONSTRUCTED_CONTEXT.set(context);
+            // Register listener so we can notify subclass on refresh events
+            context.addApplicationListener(new SourceFilteringListener(context, new RefreshListener()));
 
-        // Register this instance as an implicitly resolvable dependency
-        context.addBeanFactoryPostProcessor(new BeanFactoryPostProcessor() {
-            @Override
-            public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
-                beanFactory.registerResolvableDependency(VaadinServlet.class, BaseSpringContextApplication.this);
-            }
-        });
+            // Register this instance as an implicitly resolvable dependency
+            context.addBeanFactoryPostProcessor(new BeanFactoryPostProcessor() {
+                @Override
+                public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) {
+                    beanFactory.registerResolvableDependency(VaadinServlet.class, BaseSpringContextApplication.this);
+                }
+            });
 
-        // Invoke any subclass setup
-        this.postProcessWebApplicationContext(context);
+            // Invoke any subclass setup
+            this.postProcessWebApplicationContext(context);
 
-        // Refresh context
-        context.refresh();
+            // Refresh context
+            context.refresh();
+        }
+        finally {
+        	CURRENTLY_CONSTRUCTED_CONTEXT.set(null);
+        }
 
         return context;
     }
