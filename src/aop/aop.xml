@@ -8,5 +8,6 @@
         <aspect name="org.dellroad.stuff.spring.ThreadTransactionalAspect"/>
         <aspect name="org.dellroad.stuff.vaadin.VaadinConfigurableAspect"/>
         <aspect name="org.dellroad.stuff.vaadin7.VaadinConfigurableAspect"/>
-        </aspects>
+    </aspects>
 </aspectj>
+

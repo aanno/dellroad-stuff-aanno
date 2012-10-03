@@ -1,5 +1,7 @@
 #!/bin/bash -x
 
+mkdir classes-eclipse/META-INF
+cp src/aop/aop.xml classes-eclipse/META-INF
 pushd classes-eclipse
 	jar cvf ../dellroad-stuff-vaadin-2.0.jar .
 popd

@@ -1,5 +1,8 @@
 package org.dellroad.stuff.vaadin7;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -8,7 +11,9 @@ import com.vaadin.ui.ComponentContainer;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
-public abstract class SpringUI extends UI {
+public abstract class SpringUI extends UI implements BeanFactoryAware {
+	
+	private ConfigurableWebApplicationContext context;
 
 	/**
      * Creates a new empty UI without a caption. This UI will have a
@@ -75,5 +80,14 @@ public abstract class SpringUI extends UI {
      * @see #destroySpringApplication
      */
     protected abstract void initSpringUI(VaadinRequest request, ConfigurableWebApplicationContext context);
+    
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+    	this.context = (ConfigurableWebApplicationContext) beanFactory;
+    }
+    
+    public ConfigurableWebApplicationContext getContext() {
+    	return context;
+    }
 
 }
