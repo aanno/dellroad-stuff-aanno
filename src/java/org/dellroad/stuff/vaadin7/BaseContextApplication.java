@@ -69,10 +69,10 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     
     // 
     
-    protected final Logger log = LoggerFactory.getLogger(this.getClass());
-
     private final HashSet<CloseListener> closeListeners = new HashSet<CloseListener>();
     
+    protected transient Logger log = LoggerFactory.getLogger(BaseContextApplication.class);
+
     private transient volatile ExecutorService executorService;
 
 // Initialization
@@ -653,12 +653,15 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
 // Serialization
 
     private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        log = LoggerFactory.getLogger(BaseContextApplication.class);
+        log.info("readObject SpringContextApplication");
         in.defaultReadObject();
         if (in.readBoolean())
             this.executorService = Executors.newSingleThreadExecutor();
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {
+        log.info("writeObject SpringContextApplication");
         out.defaultWriteObject();
         out.writeBoolean(this.executorService != null);
     }

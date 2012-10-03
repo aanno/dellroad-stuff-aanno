@@ -181,14 +181,14 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
      * Get this instance's associated Spring application context.
      */
     public ConfigurableWebApplicationContext getApplicationContext(int uiId) {
-        return uiId2Context.get(uiId2Context);
+        return uiId2Context.get(uiId);
     }
 
     /**
      * Get this instance's associated Spring application context.
      */
     public ConfigurableWebApplicationContext removeApplicationContext(int uiId) {
-        return uiId2Context.remove(uiId2Context);
+        return uiId2Context.remove(uiId);
     }
 
     /**
@@ -275,10 +275,9 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     }
     
     private void close(int uiId) {
-    	removeApplicationContext(uiId);
-        log.info("closing application context associated with Vaadin ui "  + " " + uiId
-                + " " + BaseSpringContextApplication.this.getApplicationName());
         final ConfigurableWebApplicationContext context = removeApplicationContext(uiId);
+        log.info("closing application context associated with Vaadin ui " + uiId
+                + " " + BaseSpringContextApplication.this.getApplicationName() + " " + context);
         if (context != null) {
         	context.close();
         }
@@ -413,17 +412,19 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
 // Serialization
 
     private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+        log.info("readObject BaseSpringContextApplication: " + getApplicationName());
         input.defaultReadObject();
         final Set<Integer> uiIds = (Set<Integer>) input.readObject();
         for (Integer uiId: uiIds) {
-        	final ConfigurableWebApplicationContext context = loadContext();
-        	setApplicationContext(uiId, context);
+            final ConfigurableWebApplicationContext context = loadContext();
+            setApplicationContext(uiId, context);
         }
     }
     
     private void writeObject(ObjectOutputStream out) throws IOException {
-    	out.defaultWriteObject();
-    	out.writeObject(new HashSet<Integer>(uiId2Context.keySet()));
+        log.info("writeObject BaseSpringContextApplication: " + getApplicationName());
+        out.defaultWriteObject();
+        out.writeObject(new HashSet<Integer>(uiId2Context.keySet()));
     }
 
 // Nested classes
@@ -447,13 +448,13 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     	
         @Override
         public void applicationClosed(CloseEvent closeEvent) {
-        	log.info("close for uiId " + uiId + " triggered by context close");
+            log.info("close for uiId " + uiId + " triggered by context close");
         	close(uiId);
         }
         
 		@Override
 		public void cleanup(CleanupEvent event) {
-        	log.info("close for uiId " + uiId + " triggered by UI cleanup");
+            log.info("close for uiId " + uiId + " triggered by UI cleanup");
 			close(uiId);
 		}
 		
