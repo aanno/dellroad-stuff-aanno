@@ -7,7 +7,7 @@
 
 package org.dellroad.stuff.vaadin7;
 
-import com.vaadin.server.VaadinSession;
+import com.vaadin.server.VaadinServiceSession;
 import com.vaadin.ui.UI;
 
 import org.springframework.web.context.ConfigurableWebApplicationContext;
@@ -39,7 +39,7 @@ public class SpringContextApplication extends org.dellroad.stuff.vaadin7.BaseSpr
 
     @Override
     public void invoke(Runnable action) {
-        final VaadinSession previous = VaadinSession.getCurrent();
+        final VaadinServiceSession previous = VaadinServiceSession.getCurrent();
         /*
         if (previous != null && previous != this)
             throw new IllegalStateException("there is already a current application for this thread (according to Vaadin)");
@@ -49,7 +49,7 @@ public class SpringContextApplication extends org.dellroad.stuff.vaadin7.BaseSpr
         try {
             super.invoke(action);
         } finally {
-        	VaadinSession.setCurrent(previous);
+        	VaadinServiceSession.setCurrent(previous);
         }
     }
 }

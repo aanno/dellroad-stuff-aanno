@@ -31,8 +31,8 @@ import org.slf4j.LoggerFactory;
 
 import com.vaadin.server.Page;
 import com.vaadin.server.VaadinRequest;
+import com.vaadin.server.VaadinServiceSession;
 import com.vaadin.server.VaadinServlet;
-import com.vaadin.server.VaadinSession;
 import com.vaadin.shared.ui.ui.UIConstants;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.UI;
@@ -185,7 +185,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     	return null;
     }
     
-    protected void checkSession(VaadinSession vsession) {
+    protected void checkSession(VaadinServiceSession vsession) {
     	Object vo = null;
     	if (vsession != null && vsession.getSession() != null) {
     		vo = vsession.getSession().getAttribute(SESSION_ATTRIBUTE);
@@ -391,7 +391,8 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     
     public static UI getUI(HttpServletRequest request) {
     	// Get the VaadinSession
-    	final VaadinSession session = (VaadinSession) request.getAttribute(VaadinSession.class.getName());
+    	final VaadinServiceSession session = (VaadinServiceSession) 
+    			request.getAttribute(VaadinServiceSession.class.getName());
     	final Integer uiId = getUIId(request);
     	if (uiId == null) {
     		return null;
@@ -409,7 +410,8 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     
     public static UI getUI(HttpServletRequest request, int uiId) {
     	// Get the VaadinSession
-    	final VaadinSession session = (VaadinSession) request.getAttribute(VaadinSession.class.getName());
+    	final VaadinServiceSession session = (VaadinServiceSession) 
+    			request.getAttribute(VaadinServiceSession.class.getName());
         return session.getUIById(uiId);
     }
     
@@ -423,7 +425,8 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     		return null;
     	}
     	// Get the VaadinSession
-    	final VaadinSession session = (VaadinSession) request.getAttribute(VaadinSession.class.getName());
+    	final VaadinServiceSession session = (VaadinServiceSession) 
+    			request.getAttribute(VaadinServiceSession.class.getName());
     	if (session == null) {
     		return null;
     	}
@@ -438,7 +441,8 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     
     public static UI getUI(VaadinRequest request) {
     	// Get the VaadinSession
-    	final VaadinSession session = (VaadinSession) request.getAttribute(VaadinSession.class.getName());
+    	final VaadinServiceSession session = (VaadinServiceSession) 
+    			request.getAttribute(VaadinServiceSession.class.getName());
     	final Integer uiId = getUIId(request);
     	if (uiId == null) {
     		return null;
@@ -451,7 +455,8 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     		return null;
     	}
     	// Get the VaadinSession
-    	final VaadinSession session = (VaadinSession) request.getAttribute(VaadinSession.class.getName());
+    	final VaadinServiceSession session = (VaadinServiceSession) 
+    			request.getAttribute(VaadinServiceSession.class.getName());
     	if (session == null) {
     		return null;
     	}

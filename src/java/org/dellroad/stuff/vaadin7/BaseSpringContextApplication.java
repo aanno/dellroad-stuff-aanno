@@ -21,7 +21,6 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.dellroad.stuff.vaadin.ContextApplication.CloseListener;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.context.ApplicationContext;
@@ -34,9 +33,8 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
-import com.vaadin.server.VaadinRequest;
+import com.vaadin.server.VaadinServiceSession;
 import com.vaadin.server.VaadinServlet;
-import com.vaadin.server.VaadinSession;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.UI.CleanupEvent;
 
@@ -218,7 +216,7 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     	if (uiId != null) {
     		UI ui = getCurrentUI();
     		if (ui == null) {
-    			ui = VaadinSession.getCurrent().getUIById(uiId);
+    			ui = VaadinServiceSession.getCurrent().getUIById(uiId);
     		}
     		initApplication(ui);
     	}
