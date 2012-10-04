@@ -90,7 +90,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
         CURRENT_CONTEXT.set(this);
 
         // Create executor service
-        this.executorService = Executors.newSingleThreadExecutor();
+        this.executorService = newExecutor();
 
         // Initialize application
         boolean initialized = false;
@@ -101,6 +101,11 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
             if (!initialized)
                 this.shutdownExecutorService();
         }
+    }
+    
+    private final static ExecutorService newExecutor() {
+    	final ExecutorService result = Executors.newSingleThreadExecutor();
+    	return result;
     }
 
     /**
@@ -662,7 +667,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
         log.info("readObject SpringContextApplication");
         in.defaultReadObject();
         if (in.readBoolean())
-            this.executorService = Executors.newSingleThreadExecutor();
+            this.executorService = newExecutor();
     }
 
     private void writeObject(ObjectOutputStream out) throws IOException {

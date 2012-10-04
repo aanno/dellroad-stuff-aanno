@@ -1,11 +1,29 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id$ -->
+<!-- 
+	see http://www.draconianoverlord.com/2010/07/18/publishing-to-maven-repos-with-ivy.html
+	for maven publish support
+-->
 <ivysettings>
+
+    <!--
+      This property is used later in the ivy.xml file to set
+      the project's revision. Unless overridden, it defaults
+      to the Maven SNAPSHOT convention, as that it works well
+      for publishing local test builds to ~/.m2/repository.
+    -->
+    <property name="revision" value="SNAPSHOT" override="false"/>
+
+    <!-- "default" is defined later in the file. -->
+    <settings defaultResolver="ivyroundup"/>
+
+    <!-- Pulls in the "public" resolver for ibiblio-hosted jars. -->
+    <include url="${ivy.default.settings.dir}/ivysettings-public.xml"/>
+
     <resolvers>
 
         <!-- Ivy RoundUp -->
-        <chain name="ivyroundup" returnFirst="true">
+        <chain name="ivyroundup" returnFirst="true" changingPattern=".*SNAPSHOT">
 
             <!-- Ivy RoundUp - Local copy -->
             <packager name="ivyroundup-local" checkmodified="true" restricted="false"
@@ -20,11 +38,29 @@
                 <ivy      pattern="http://ivyroundup.googlecode.com/svn/trunk/repo/modules/[organisation]/[module]/[revision]/ivy.xml"/>
                 <artifact pattern="http://ivyroundup.googlecode.com/svn/trunk/repo/modules/[organisation]/[module]/[revision]/packager.xml"/>
             </packager>
-	    
-	    <!-- http://stackoverflow.com/questions/7313316/using-a-custom-repository-with-apache-ivy-no-resolver-found -->
-	    <ibiblio name="central" m2compatible="true"/>
-	    <!-- ensure that we find the vaadin7 snapshots -->
-	    <ibiblio name="vaadin-snapshots" m2compatible="true" root="http://oss.sonatype.org/content/repositories/vaadin-snapshots/" />
+
+            <!--
+              for *publishing* artifacts for local testing builds,
+              as the previous ibiblio resolver does not support
+              publishing
+            -->
+            <filesystem name="local-m2-publish" m2compatible="true">
+                <artifact pattern="${user.home}/.m2/repository/[organisation]/[module]/[revision]/[artifact]-[revision](-[classifier]).[ext]"/>
+            </filesystem>
+    
+            <!-- http://stackoverflow.com/questions/7313316/using-a-custom-repository-with-apache-ivy-no-resolver-found -->
+            <ibiblio name="central" m2compatible="true"/>
+            <!-- ensure that we find the vaadin7 snapshots -->
+            <ibiblio name="vaadin-snapshots" m2compatible="true" root="http://oss.sonatype.org/content/repositories/vaadin-snapshots/" />
+
+            <!--
+              for *retrieving* artifacts for local testing builds,
+              we'll use maven's own .m2/repository.
+	      
+	      This should be the last.
+            -->
+	    <ibiblio name="local-m2" m2compatible="true" root="file://${user.home}/.m2/repository" changingPattern=".*SNAPSHOT"/>
+            
         </chain>
     </resolvers>
     <modules>

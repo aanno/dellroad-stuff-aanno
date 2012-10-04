@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<!-- $Id$ -->
-<ivy-module version="1.0">
+<!-- 
+        see http://www.draconianoverlord.com/2010/07/18/publishing-to-maven-repos-with-ivy.html
+        for maven publish support
+-->
+<ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
 
     <info organisation="org.dellroad" module="dellroad-stuff">
         <license name="Apache License, Version 2.0" url="http://www.apache.org/licenses/LICENSE-2.0"/>
@@ -15,11 +18,34 @@
         <conf name="jibx-bind" extends="build" description="JARs required for JiBX binding"/>
         <conf name="vaadin7" description="Vaadin7 JAR only"/>
         <conf name="test" extends="build" description="JARs required during testing"/>
+	
+	<conf name="sources" description="Packing of sources for mvn."/>
     </configurations>
 
-    <dependencies>
+    <publications>
+        <!--
+            We explicitly list a pom as an artifact of our
+            project. This way the Ivy publish task will
+            upload the pom to the maven repo, along with
+            the jars and sources.
+        -->
+        <artifact type="pom" ext="pom" conf="build,build-vaadin6,build-vaadin7,vaadin7"/>
+
+        <!--
+            This is the main jar, nothing special.
+        -->
+        <artifact type="jar" ext="jar" conf="build,build-vaadin6,build-vaadin7,vaadin7"/>
+
+        <!--
+            To publish sources to a maven repo, the
+            m:classifier="sources" is required.
+        -->
+        <artifact type="source" ext="jar" conf="sources" m:classifier="sources"/>
+    </publications>
+
+    <dependencies  defaultconfmapping="sources->sources(),%->default" defaultconf="build-vaadin7,sources">
         <dependency force="true" org="com.vaadin" name="vaadin" rev="6+" conf="build-vaadin6->default"/>
-	
+
         <!-- dependency force="true" org="com.vaadin" name="vaadin" rev="7.0.0.alpha3" conf="build-vaadin7,vaadin7->default"/ -->
         <dependency force="true" org="com.vaadin" name="vaadin-server" rev="7.0.0.beta3" conf="build-vaadin7,vaadin7->default"/>
         <dependency force="true" org="com.vaadin" name="vaadin-shared" rev="7.0.0.beta3" conf="build-vaadin7,vaadin7->default"/>
@@ -27,7 +53,8 @@
         <dependency force="true" org="com.vaadin" name="vaadin-theme-compiler" rev="7.0.0.beta3" conf="build-vaadin7,vaadin7->default"/>
         <dependency force="true" org="com.vaadin" name="vaadin-client" rev="7.0.0.beta3" conf="build-vaadin7,vaadin7->default"/>
         <dependency force="true" org="com.vaadin" name="vaadin-client-compiled" rev="7.0.0.beta3" conf="build-vaadin7,vaadin7->default"/>
-	
+        <dependency force="true" org="org.json" name="json" rev="20080701" conf="build-vaadin7,vaadin7->default"/>
+
         <dependency force="true" org="javax.servlet" name="servletapi" rev="3.0" conf="build->default"/>
         <dependency force="true" org="javax.persistence" name="persistence-api" rev="2.0" conf="build->default"/>
         <dependency force="true" org="javax.validation" name="validation-api" rev="1.0.0.GA" conf="build->default"/>
