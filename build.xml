@@ -15,6 +15,20 @@
     <property name="vaadin.plugin.groupId" value="org.dellroad"/>
     <property name="vaadin.plugin.artifactId" value="dellroad-stuff-vaadin"/>
 
+    <!-- add missing support for maven-ant-tasks -->
+    <path id="maven-ant-tasks.classpath" path="lib/maven-ant-tasks-2.1.3.jar" />
+    <typedef resource="org/apache/maven/artifact/ant/antlib.xml" uri="antlib:org.apache.maven.artifact.ant" classpathref="maven-ant-tasks.classpath" />
+
+    <!-- 
+        see http://www.draconianoverlord.com/2010/07/18/publishing-to-maven-repos-with-ivy.html
+        for maven publish support
+    -->
+    <property name="ivy.jar.version" value="2.3.0-rc1"/>
+    <property name="ivy.jar.name" value="ivy-${ivy.jar.version}.jar"/>
+    <property name="ivy.home" value="${user.home}/.ivy2"/>
+    <property name="ivy.instance" value="src/build/ivysettings.xml"/>
+    <available property="ivy.installed" file="${ivy.home}/${ivy.jar.name}"/>
+    
     <!-- Import generic build macros -->
     <import file="${basedir}/src/build/macros.xml"/>
 
@@ -356,6 +370,56 @@
             <arg value="-Dclassifier=javadoc" />
             <arg value="-Pgpg" />
         </artifact:mvn>
+    </target>
+    
+    <!-- 
+        this is called once and auto-installs the ivy jar into
+        ~/.ivy2 so that users only have to have ant to build.
+    -->
+    <target name="ivy-install" unless="ivy.installed">
+        <mkdir dir="${ivy.home}"/>
+        <get src="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.jar.version}/${ivy.jar.name}" dest="${ivy.home}/${ivy.jar.name}"/>
+    </target>
+
+    <!--
+        this is called automatically and just inits ivy
+    -->
+    <target name="ivy-init" depends="ivy-install">
+        <taskdef resource="org/apache/ivy/ant/antlib.xml" uri="antlib:org.apache.ivy.ant" classpath="${ivy.home}/${ivy.jar.name}"/>
+        <ivy:resolve file="src/ivy/ivy.xml"/>
+    </target>
+
+    <!--
+        called by the user to download jars into bin/lib/
+    -->
+    <target name="ivy-retrieve" depends="ivy-init" description="downloads jars for the project">
+        <ivy:retrieve file="src/ivy/ivy.xml" pattern="bin/lib/[conf]/[type]s/[artifact].[ext]" conf="*" type="*"/>
+    </target>
+
+    <!--
+        makes a pom for the project based off the ivy.xml file
+    -->
+    <target name="gen-pom" depends="jars">
+	<ivy:makepom ivyfile="src/ivy/ivy.xml" pomfile="bin/poms/${ant.project.name}.pom">
+            <!--
+                Mapping confs to scopes is important, otherwise
+                unmapped confs are included as optional. If you
+                have private confs, the best option seems to
+                be marking them as provided or system. See
+                IVY-1201 for an ehancement request.
+            -->
+            <mapping conf="build" scope="compile"/>
+        </ivy:makepom>
+    </target>
+
+    <!--
+        publishes to ~/.m2/repository so that other testing
+        builds on our local machine can see it
+    -->
+    <target name="ivy-publish-local" depends="jar,ivy-init,gen-pom" description="publish jar/source to maven repo mounted at ~/.m2/repository">
+        <ivy:publish resolver="local-m2-publish" forcedeliver="true" overwrite="true" publishivy="false">
+            <artifacts pattern="bin/[type]s/[artifact].[ext]"/>
+        </ivy:publish>
     </target>
 
     <!-- Reports target -->
