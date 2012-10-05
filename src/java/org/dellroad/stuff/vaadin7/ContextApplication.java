@@ -9,6 +9,7 @@ package org.dellroad.stuff.vaadin7;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServiceSession;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.UI;
@@ -28,7 +29,7 @@ public class ContextApplication extends org.dellroad.stuff.vaadin7.BaseContextAp
      * The implementation in {@link ContextApplication} does nothing.
      */
     @Override
-    protected void initApplication(HttpServletRequest request) {
+    protected void initApplication(VaadinRequest request) {
     }
     
     @Override

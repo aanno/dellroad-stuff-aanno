@@ -69,8 +69,9 @@ public abstract class SpringUI extends UI implements BeanFactoryAware {
 	protected final void init(VaadinRequest request) {
 		BaseSpringContextApplication.setCurrentUI(this);
 		final BaseSpringContextApplication app = BaseSpringContextApplication.get();
-		app.initApplication(this);
-		initSpringUI(request, app.getApplicationContext(getUIId()));
+		app.initApplication(request);
+		final String so = SessionIdUtils.retrieveSessionId(request.getWrappedSession());
+		initSpringUI(request, app.getApplicationContext(so));
 	}
 
     /**

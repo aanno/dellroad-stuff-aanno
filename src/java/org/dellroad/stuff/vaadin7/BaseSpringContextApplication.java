@@ -33,6 +33,7 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
+import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServiceSession;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.UI;
@@ -157,10 +158,10 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     		new ThreadLocal<ConfigurableWebApplicationContext>();
 
     /**
-     * UI id -> ConfigurableWebApplicationContext.
+     * (String) sessionId -> ConfigurableWebApplicationContext.
      */
-    private transient Map<Integer,ConfigurableWebApplicationContext> uiId2Context = 
-    		new ConcurrentHashMap<Integer, ConfigurableWebApplicationContext>();
+    private transient Map<String,ConfigurableWebApplicationContext> sessionId2Context = 
+    		new ConcurrentHashMap<String, ConfigurableWebApplicationContext>();
     
     public BaseSpringContextApplication() {
     }
@@ -174,22 +175,22 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     protected final void doOnRequestEnd(HttpServletRequest request, HttpServletResponse response) {
     }
     
-    private void setApplicationContext(int uiId, ConfigurableWebApplicationContext context) {
-    	uiId2Context.put(uiId, context);
+    private void setApplicationContext(String sessionId, ConfigurableWebApplicationContext context) {
+    	sessionId2Context.put(sessionId, context);
     }
     
     /**
      * Get this instance's associated Spring application context.
      */
-    public ConfigurableWebApplicationContext getApplicationContext(int uiId) {
-        return uiId2Context.get(uiId);
+    public ConfigurableWebApplicationContext getApplicationContext(String sessionId) {
+        return sessionId2Context.get(sessionId);
     }
 
     /**
      * Get this instance's associated Spring application context.
      */
-    public ConfigurableWebApplicationContext removeApplicationContext(int uiId) {
-        return uiId2Context.remove(uiId);
+    public ConfigurableWebApplicationContext removeApplicationContext(String sessionId) {
+        return sessionId2Context.remove(sessionId);
     }
 
     /**
@@ -218,20 +219,23 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
      * After initializing the associated Spring application context, this method delegates to {@link #initSpringApplication}.
      */
     @Override
-    protected final void initApplication(HttpServletRequest request) {
-    	final Integer uiId = getUIId(request);
-    	if (uiId != null) {
+    protected final void initApplication(VaadinRequest request) {
+    	final String so = SessionIdUtils.retrieveSessionId(request.getWrappedSession());
+    	if (!sessionId2Context.containsKey(so)) {
     		UI ui = getCurrentUI();
+    		/*
     		if (ui == null) {
-    			ui = VaadinServiceSession.getCurrent().getUIById(uiId);
+    			ui = VaadinServiceSession.getCurrent().getUIById(ui.getUIId());
     		}
-    		initApplication(ui);
+    		 */
+    		if (ui != null) {
+    			initApplication(so, ui);
+    		}
     	}
     }
     
-    protected final void initApplication(UI ui) {
-    	final int uiId = ui.getUIId();
-		ConfigurableWebApplicationContext context = uiId2Context.get(uiId);
+    protected final void initApplication(String sessionId, UI ui) {
+		ConfigurableWebApplicationContext context = sessionId2Context.get(sessionId);
 		if (context != null) {
 			setCurrentUI(ui);
 			return;
@@ -243,17 +247,17 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
         // Initialize subclass
         this.initSpringApplication(context);
         
-		setApplicationContext(uiId, context);
+		setApplicationContext(sessionId, context);
 	
 		// Get notified of context shutdown so we can shut down the context as well
-		final ContextCloseListener listener = new ContextCloseListener(uiId);
+		final ContextCloseListener listener = new ContextCloseListener(sessionId);
 		this.addListener(listener);
 		
 		setCurrentUI(ui);
 		ui.addCleanupListener(listener);
 		
-        log.info("context created: " + context + "for uiId " + uiId 
-        		+ ", new UI-context size: " + uiId2Context.size());
+        log.info("context created: " + context + "for sessionId " + sessionId 
+        		+ ", new sessionId size: " + sessionId2Context.size());
         return;
     }
 
@@ -275,18 +279,18 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
      */
     @Override
     public void close() {
-    	int uiId = getUIId();
-    	close(uiId);
+    	final String so = SessionIdUtils.retrieveSessionId(VaadinServiceSession.getCurrent().getSession());
+    	close(so);
     }
     
-    private void close(int uiId) {
-        final ConfigurableWebApplicationContext context = removeApplicationContext(uiId);
-        log.info("closing application context associated with Vaadin ui " + uiId
+    private void close(String sessionId) {
+        final ConfigurableWebApplicationContext context = removeApplicationContext(sessionId);
+        log.info("closing application context associated with Vaadin sessionId " + sessionId
                 + " " + BaseSpringContextApplication.this.getApplicationName() + " " + context);
         if (context != null) {
         	context.close();
         }
-        log.info("UI-context size: " + uiId2Context.size());
+        log.info("sessionId size: " + sessionId2Context.size());
         destroySpringApplication();
     }
     
@@ -425,17 +429,17 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
         log.info("readObject BaseSpringContextApplication: " + getApplicationName());
         input.defaultReadObject();
-        final Set<Integer> uiIds = (Set<Integer>) input.readObject();
-        for (Integer uiId: uiIds) {
+        final Set<String> sessionIds = (Set<String>) input.readObject();
+        for (String sessionId: sessionIds) {
             final ConfigurableWebApplicationContext context = loadContext();
-            setApplicationContext(uiId, context);
+            setApplicationContext(sessionId, context);
         }
     }
     
     private void writeObject(ObjectOutputStream out) throws IOException {
         log.info("writeObject BaseSpringContextApplication: " + getApplicationName());
         out.defaultWriteObject();
-        out.writeObject(new HashSet<Integer>(uiId2Context.keySet()));
+        out.writeObject(new HashSet<String>(sessionId2Context.keySet()));
     }
 
 // Nested classes
@@ -451,22 +455,22 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     // My close listener
     private class ContextCloseListener implements CloseListener, UI.CleanupListener, Serializable, Cloneable {
     	
-    	private final int uiId;
+    	private final String sessionId;
     	
-    	private ContextCloseListener(int uiId) {
-    		this.uiId = uiId;
+    	private ContextCloseListener(String sessionId) {
+    		this.sessionId = sessionId;
     	}
     	
         @Override
         public void applicationClosed(CloseEvent closeEvent) {
-            log.info("close for uiId " + uiId + " triggered by context close");
-        	close(uiId);
+            log.info("close for uiId " + sessionId + " triggered by context close");
+        	close(sessionId);
         }
         
 		@Override
 		public void cleanup(CleanupEvent event) {
-            log.info("close for uiId " + uiId + " triggered by UI cleanup");
-			close(uiId);
+            log.info("close for uiId " + sessionId + " triggered by UI cleanup");
+			close(sessionId);
 		}
 		
     }
