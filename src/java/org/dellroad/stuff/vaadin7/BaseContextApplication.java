@@ -19,7 +19,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -33,10 +32,8 @@ import com.vaadin.server.Page;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServiceSession;
 import com.vaadin.server.VaadinServlet;
-import com.vaadin.shared.ui.ui.UIConstants;
 import com.vaadin.ui.Notification;
 import com.vaadin.ui.UI;
-import com.vaadin.util.CurrentInstance;
 
 /**
  * {@link Application} subclass that provides some basic infrastructure for Vaadin applications:
@@ -87,7 +84,8 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
         CURRENT_CONTEXT.set(this);
 
         // Create executor service
-        this.executorService = newExecutor();
+        if (executorService == null)
+        	this.executorService = newExecutor();
 
         // Initialize application
         boolean initialized = false;
@@ -442,18 +440,6 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     	CURRENT_UI.set(ui);
     }
     
-    /*
-    public static Integer getUIId() {
-    	final HttpServletRequest request = CURRENT_REQUEST.get();
-    	return VaadinUtils.getUIId(request);
-    }
-    
-    public static UI getUI() {
-    	final HttpServletRequest request = CURRENT_REQUEST.get();
-    	return VaadinUtils.getUI(request);
-    }
-     */
-    
 // Listener stuff
 
     /**
@@ -466,12 +452,12 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
      */
     @Override
     public void destroy() {
-
         // Invoke superclass
         super.destroy();
 
         // Notify listeners
-        CloseEvent closeEvent = new CloseEvent(this);
+        final CloseEvent closeEvent = new CloseEvent(this);
+        log.info("destroy() called, emitting closeEvent " + closeEvent);
         for (CloseListener closeListener : this.getCloseListeners()) {
             try {
                 closeListener.applicationClosed(closeEvent);
@@ -487,7 +473,8 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     }
 
     private void shutdownExecutorService() {
-
+        log.info("shutdownExecutorService() called");
+    	
         // Already shutdown?
         if (this.executorService == null)
             return;

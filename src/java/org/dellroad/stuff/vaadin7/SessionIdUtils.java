@@ -4,9 +4,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.servlet.http.HttpSession;
 
+import org.apache.log4j.Logger;
+
 import com.vaadin.server.WrappedSession;
 
 public class SessionIdUtils {
+	
+    private static final Logger LOG = Logger.getLogger(SessionIdUtils.class);
 	
     private static final String SESSION_ATTRIBUTE = "BaseContextApplication.SESSION_ATTRIBUTE";
     
@@ -38,7 +42,13 @@ public class SessionIdUtils {
 	}
 
 	public static String retrieveSessionId(WrappedSession session) {
-        return (String) session.getAttribute(SESSION_ATTRIBUTE);
+		try {
+			return (String) session.getAttribute(SESSION_ATTRIBUTE);
+		}
+		catch (IllegalStateException e) {
+			LOG.warn("No sessionId found: " + e);
+			return null;
+		}
 	}
 
 }

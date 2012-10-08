@@ -17,7 +17,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.servlet.ServletConfig;
 import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -33,7 +35,13 @@ import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 import org.springframework.web.context.support.XmlWebApplicationContext;
 
+import com.vaadin.server.ServiceException;
+import com.vaadin.server.SessionDestroyEvent;
+import com.vaadin.server.SessionDestroyListener;
+import com.vaadin.server.SessionInitEvent;
+import com.vaadin.server.SessionInitListener;
 import com.vaadin.server.VaadinRequest;
+import com.vaadin.server.VaadinService;
 import com.vaadin.server.VaadinServiceSession;
 import com.vaadin.server.VaadinServlet;
 import com.vaadin.ui.UI;
@@ -160,10 +168,36 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     /**
      * (String) sessionId -> ConfigurableWebApplicationContext.
      */
-    private transient Map<String,ConfigurableWebApplicationContext> sessionId2Context = 
+    private static final Map<String,ConfigurableWebApplicationContext> SESSIONID_2_CONTEXT = 
     		new ConcurrentHashMap<String, ConfigurableWebApplicationContext>();
     
     public BaseSpringContextApplication() {
+    }
+    
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
+        final VaadinService service = getService();
+        service.addSessionDestroyListener(new SessionDestroyListener() {
+			
+			@Override
+			public void sessionDestroy(SessionDestroyEvent event) {
+				final String so = SessionIdUtils.retrieveSessionId(event.getSession().getSession());
+				log.info("sessionDestroy: " + event);
+				close(so);
+			}
+		});
+        service.addSessionInitListener(new SessionInitListener() {
+			
+			@Override
+			public void sessionInit(SessionInitEvent event) throws ServiceException {
+				final String so = SessionIdUtils.retrieveSessionId(event.getSession().getSession());
+				log.info("sessionInit " + event + " sessionId " + so);
+				/*
+				initSession(currentRequest());
+				 */
+			}
+		});
     }
 
     @Override
@@ -176,21 +210,27 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     }
     
     private void setApplicationContext(String sessionId, ConfigurableWebApplicationContext context) {
-    	sessionId2Context.put(sessionId, context);
+    	SESSIONID_2_CONTEXT.put(sessionId, context);
     }
     
     /**
      * Get this instance's associated Spring application context.
      */
     public ConfigurableWebApplicationContext getApplicationContext(String sessionId) {
-        return sessionId2Context.get(sessionId);
+    	if (sessionId == null) {
+    		return null;
+    	}
+        return SESSIONID_2_CONTEXT.get(sessionId);
     }
 
     /**
      * Get this instance's associated Spring application context.
      */
     public ConfigurableWebApplicationContext removeApplicationContext(String sessionId) {
-        return sessionId2Context.remove(sessionId);
+    	if (sessionId == null) {
+    		return null;
+    	}
+        return SESSIONID_2_CONTEXT.remove(sessionId);
     }
 
     /**
@@ -221,11 +261,16 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     @Override
     protected final void initApplication(VaadinRequest request) {
     	final String so = SessionIdUtils.retrieveSessionId(request.getWrappedSession());
-    	if (!sessionId2Context.containsKey(so)) {
+    	final ConfigurableWebApplicationContext context = SESSIONID_2_CONTEXT.get(so);
+    	if (context == null) {
     		UI ui = getCurrentUI();
+    		if (ui == null) {
+    			ui = UI.getCurrent();
+    			log.info("No (thread) current SpringUI, trying UI.getCurrent(): " + ui);
+    		}
     		/*
     		if (ui == null) {
-    			ui = VaadinServiceSession.getCurrent().getUIById(ui.getUIId());
+    			log.info("No current UI, nevertheless initializing one...");
     		}
     		 */
     		if (ui != null) {
@@ -235,7 +280,11 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     }
     
     protected final void initApplication(String sessionId, UI ui) {
-		ConfigurableWebApplicationContext context = sessionId2Context.get(sessionId);
+    	if (ui == null) {
+    		throw new IllegalStateException();
+    	}
+    	
+		ConfigurableWebApplicationContext context = SESSIONID_2_CONTEXT.get(sessionId);
 		if (context != null) {
 			setCurrentUI(ui);
 			return;
@@ -254,11 +303,10 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
 		this.addListener(listener);
 		
 		setCurrentUI(ui);
-		ui.addCleanupListener(listener);
+		// ui.addCleanupListener(listener);
 		
         log.info("context created: " + context + "for sessionId " + sessionId 
-        		+ ", new sessionId size: " + sessionId2Context.size());
-        return;
+        		+ ", new sessionId size: " + SESSIONID_2_CONTEXT.size());
     }
 
     /**
@@ -280,6 +328,7 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     @Override
     public void close() {
     	final String so = SessionIdUtils.retrieveSessionId(VaadinServiceSession.getCurrent().getSession());
+    	log.info("close() called, associated sessionId " + so);
     	close(so);
     }
     
@@ -287,10 +336,11 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
         final ConfigurableWebApplicationContext context = removeApplicationContext(sessionId);
         log.info("closing application context associated with Vaadin sessionId " + sessionId
                 + " " + BaseSpringContextApplication.this.getApplicationName() + " " + context);
-        if (context != null) {
+        if (context != null && sessionId != null) {
+        	log.info("closing associated context " + context);
         	context.close();
         }
-        log.info("sessionId size: " + sessionId2Context.size());
+        log.info("sessionId size: " + SESSIONID_2_CONTEXT.size());
         destroySpringApplication();
     }
     
@@ -426,6 +476,7 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
 
 // Serialization
 
+    /*
     private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
         log.info("readObject BaseSpringContextApplication: " + getApplicationName());
         input.defaultReadObject();
@@ -439,8 +490,9 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     private void writeObject(ObjectOutputStream out) throws IOException {
         log.info("writeObject BaseSpringContextApplication: " + getApplicationName());
         out.defaultWriteObject();
-        out.writeObject(new HashSet<String>(sessionId2Context.keySet()));
+        out.writeObject(new HashSet<String>(SESSIONID_2_CONTEXT.keySet()));
     }
+     */
 
 // Nested classes
 

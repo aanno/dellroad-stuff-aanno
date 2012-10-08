@@ -10,6 +10,8 @@ package org.dellroad.stuff.vaadin7;
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.dellroad.stuff.spring.AbstractConfigurableAspect;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.aspectj.AbstractDependencyInjectionAspect;
@@ -88,8 +90,15 @@ public aspect VaadinConfigurableAspect extends AbstractConfigurableAspect {
         // ConfigurableWebApplicationContext context = BaseSpringContextApplication.get().getApplicationContext();
         // ConfigurableWebApplicationContext context = BaseSpringContextApplication.get().getApplicationContext(
         // 		BaseSpringContextApplication.getCurrentUI().getUIId());
-    	final ConfigurableWebApplicationContext context = BaseSpringContextApplication.get().getCurrentlyConstructedContext();
-
+    	final BaseSpringContextApplication bsca = BaseSpringContextApplication.get();
+        ConfigurableWebApplicationContext context = bsca.getCurrentlyConstructedContext();
+        if (context == null) {
+        	final HttpServletRequest request = BaseSpringContextApplication.currentRequest();
+        	bsca.initSession(request);
+        	context = bsca.getApplicationContext(SessionIdUtils.retrieveSessionId(request.getSession()));
+        	assert context != null;
+        }
+    	
         // Logging
         if (this.log.isTraceEnabled())
             this.log.trace("using application context " + context + " to configure @VaadinConfigurable bean " + bean);

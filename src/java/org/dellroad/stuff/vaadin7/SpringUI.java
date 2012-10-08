@@ -11,6 +11,7 @@ import com.vaadin.ui.ComponentContainer;
 import com.vaadin.ui.UI;
 import com.vaadin.ui.VerticalLayout;
 
+@VaadinConfigurable
 public abstract class SpringUI extends UI implements BeanFactoryAware {
 	
 	private ConfigurableWebApplicationContext context;
@@ -21,6 +22,7 @@ public abstract class SpringUI extends UI implements BeanFactoryAware {
      */
      public SpringUI() {
     	super();
+    	BaseSpringContextApplication.setCurrentUI(this);
     }
 
     /**
