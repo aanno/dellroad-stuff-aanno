@@ -13,7 +13,6 @@ import org.springframework.beans.factory.ObjectFactory;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.Scope;
-import org.springframework.beans.factory.parsing.BeanComponentDefinition;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 
 import com.vaadin.ui.UI;
