@@ -56,7 +56,6 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
     public static final int DEFAULT_NOTIFICATION_DELAY = 30000;
     
     private static final ThreadLocal<BaseContextApplication> CURRENT_CONTEXT = new ThreadLocal<BaseContextApplication>();
-    private static final ThreadLocal<UI> CURRENT_UI = new ThreadLocal<UI>();
     private static final ThreadLocal<HttpServletRequest> CURRENT_REQUEST = new ThreadLocal<HttpServletRequest>();
     private static final ThreadLocal<HttpServletResponse> CURRENT_RESPONSE = new ThreadLocal<HttpServletResponse>();
     private static final ThreadLocal<HttpSession> CURRENT_SESSION = new ThreadLocal<HttpSession>();
@@ -311,8 +310,7 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
             BaseContextApplication.CURRENT_CONTEXT.remove();
             BaseContextApplication.CURRENT_REQUEST.remove();
             BaseContextApplication.CURRENT_RESPONSE.remove();
-            BaseContextApplication.CURRENT_SESSION.remove();    
-            setCurrentUI(null);
+            BaseContextApplication.CURRENT_SESSION.remove();
         }
     }
 
@@ -432,14 +430,6 @@ public abstract class BaseContextApplication extends VaadinServlet implements Ex
         return BaseContextApplication.CURRENT_RESPONSE.get();
     }
 
-    public static UI getCurrentUI() {
-    	return CURRENT_UI.get();
-    }
-    
-    static void setCurrentUI(UI ui) {
-    	CURRENT_UI.set(ui);
-    }
-    
 // Listener stuff
 
     /**

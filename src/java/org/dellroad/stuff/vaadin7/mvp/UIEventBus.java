@@ -3,13 +3,15 @@ package org.dellroad.stuff.vaadin7.mvp;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 
-public class UIEventBus implements ApplicationEventMulticaster, BeanFactoryAware {
+public class UIEventBus implements ApplicationEventMulticaster, ApplicationContextAware {
 	
 	private final ApplicationEventMulticaster wrapped = new SimpleApplicationEventMulticaster();
 	
@@ -49,8 +51,8 @@ public class UIEventBus implements ApplicationEventMulticaster, BeanFactoryAware
 	}
 
 	@Override
-	public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-		this.context = (ConfigurableWebApplicationContext) beanFactory;
+	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+		this.context = (ConfigurableWebApplicationContext) applicationContext;
 	}
 
 }

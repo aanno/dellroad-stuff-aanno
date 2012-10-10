@@ -80,7 +80,7 @@ public class VaadinUIScope implements Scope, BeanFactoryPostProcessor, UI.Cleanu
     		return context;
     	}
     	else {
-    		throw new IllegalStateException();
+    		throw new IllegalStateException("Can't find spring context associated with UI " + ui);
     	}
     }
 
@@ -104,7 +104,7 @@ public class VaadinUIScope implements Scope, BeanFactoryPostProcessor, UI.Cleanu
 
     @Override
     public String getConversationId() {
-        UI ui = BaseContextApplication.getCurrentUI();
+        UI ui = UI.getCurrent();
         if (ui == null)
             return null;
         return ui.getClass().getName() + "@" + System.identityHashCode(ui);
@@ -113,14 +113,14 @@ public class VaadinUIScope implements Scope, BeanFactoryPostProcessor, UI.Cleanu
     @Override
     public Object resolveContextualObject(String key) {
         if (APPLICATION_KEY.equals(key))
-            return BaseContextApplication.getCurrentUI();
+            return UI.getCurrent();
         return null;
     }
 
 // Internal methods
 
     private synchronized ApplicationBeanHolder getApplicationBeanHolder(boolean create) {
-        final UI ui = BaseContextApplication.getCurrentUI();
+        final UI ui = UI.getCurrent();
         final UIScopeKey key = new UIScopeKey(getContextByUI(ui), ui.getUIId());
         // application.addListener(this);
         ApplicationBeanHolder beanHolder = this.beanHolders.get(key);

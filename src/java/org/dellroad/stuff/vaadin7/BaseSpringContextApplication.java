@@ -7,13 +7,8 @@
 
 package org.dellroad.stuff.vaadin7;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -263,16 +258,7 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     	final String so = SessionIdUtils.retrieveSessionId(request.getWrappedSession());
     	final ConfigurableWebApplicationContext context = SESSIONID_2_CONTEXT.get(so);
     	if (context == null) {
-    		UI ui = getCurrentUI();
-    		if (ui == null) {
-    			ui = UI.getCurrent();
-    			log.info("No (thread) current SpringUI, trying UI.getCurrent(): " + ui);
-    		}
-    		/*
-    		if (ui == null) {
-    			log.info("No current UI, nevertheless initializing one...");
-    		}
-    		 */
+    		UI ui = UI.getCurrent();
     		if (ui != null) {
     			initApplication(so, ui);
     		}
@@ -286,7 +272,6 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
     	
 		ConfigurableWebApplicationContext context = SESSIONID_2_CONTEXT.get(sessionId);
 		if (context != null) {
-			setCurrentUI(ui);
 			return;
 		}
 	
@@ -301,9 +286,6 @@ public abstract class BaseSpringContextApplication extends BaseContextApplicatio
 		// Get notified of context shutdown so we can shut down the context as well
 		final ContextCloseListener listener = new ContextCloseListener(sessionId);
 		this.addListener(listener);
-		
-		setCurrentUI(ui);
-		// ui.addCleanupListener(listener);
 		
         log.info("context created: " + context + "for sessionId " + sessionId 
         		+ ", new sessionId size: " + SESSIONID_2_CONTEXT.size());

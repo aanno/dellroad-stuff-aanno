@@ -22,7 +22,7 @@ public abstract class SpringUI extends UI implements ApplicationContextAware {
      */
      public SpringUI() {
     	super();
-    	BaseSpringContextApplication.setCurrentUI(this);
+    	UI.setCurrent(this);
     }
 
     /**
@@ -35,6 +35,7 @@ public abstract class SpringUI extends UI implements ApplicationContextAware {
      */
     public SpringUI(ComponentContainer content) {
     	super(content);
+    	UI.setCurrent(this);
     }
 
     /**
@@ -49,6 +50,7 @@ public abstract class SpringUI extends UI implements ApplicationContextAware {
      */
     public SpringUI(String caption) {
     	super(caption);
+    	UI.setCurrent(this);
     }
 
     /**
@@ -65,11 +67,11 @@ public abstract class SpringUI extends UI implements ApplicationContextAware {
      */
     public SpringUI(String caption, ComponentContainer content) {
     	super(caption, content);
+    	UI.setCurrent(this);
     }
 
 	@Override
 	protected final void init(VaadinRequest request) {
-		BaseSpringContextApplication.setCurrentUI(this);
 		final BaseSpringContextApplication app = BaseSpringContextApplication.get();
 		app.initApplication(request);
 		final String so = SessionIdUtils.retrieveSessionId(request.getWrappedSession());
