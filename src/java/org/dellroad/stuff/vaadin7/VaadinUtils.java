@@ -5,6 +5,7 @@ import javax.servlet.http.HttpServletRequest;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinServiceSession;
 import com.vaadin.shared.ui.ui.UIConstants;
+import com.vaadin.ui.Component;
 import com.vaadin.ui.UI;
 
 public class VaadinUtils {
@@ -77,6 +78,17 @@ public class VaadinUtils {
         }
         final int uiId = Integer.parseInt(uiIdString);
         return uiId;
-    }	
+    }
+    
+    public static UI getUI(Component component) {
+        UI result = component.getUI();
+        if (result == null) {
+            result = UI.getCurrent();
+            if (result == null) {
+                throw new NullPointerException();
+            }
+        }
+        return result;
+    }
 
 }
