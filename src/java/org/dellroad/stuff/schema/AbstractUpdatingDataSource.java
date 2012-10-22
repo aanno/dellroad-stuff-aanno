@@ -111,6 +111,15 @@ public abstract class AbstractUpdatingDataSource implements DataSource {
         }
     }
 
+    @Override
+    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
+        try {
+            return getUpdatedDataSource().getParentLogger();
+        } catch (SQLException e) {
+            throw new SQLFeatureNotSupportedException(e);
+        }
+    }
+    
     // Internal methods
 
     private synchronized DataSource getUpdatedDataSource() throws SQLException {
