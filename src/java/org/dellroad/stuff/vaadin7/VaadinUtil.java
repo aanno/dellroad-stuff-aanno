@@ -12,6 +12,8 @@ import com.vaadin.server.SessionDestroyListener;
 import com.vaadin.server.VaadinRequest;
 import com.vaadin.server.VaadinService;
 import com.vaadin.server.VaadinSession;
+import com.vaadin.ui.Component;
+import com.vaadin.ui.UI;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -184,6 +186,17 @@ public final class VaadinUtil {
      */
     public static void removeSessionDestroyListener(VaadinSession session, SessionDestroyListener listener) {
         session.getService().removeSessionDestroyListener(new LeakAvoidingDestroyListener(session, listener));
+    }
+
+    public static UI getUI(Component component) {
+        UI result = component.getUI();
+        if (result == null) {
+            result = UI.getCurrent();
+            if (result == null) {
+                throw new NullPointerException();
+            }
+        }
+        return result;
     }
 
 // LeakAvoidingDestroyListener
