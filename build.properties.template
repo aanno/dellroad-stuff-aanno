@@ -1,0 +1,7 @@
+library.version=tp2
+svn.revision=
+full.version=tp2-SNAPSHOT
+maven-staging-repository-id=releases.maven.novabit.de
+maven-staging-repository-url=http://maven.nuclos.de/content/repositories/releases/
+maven-snapshots-repository-id=snapshots.maven.novabit.de
+maven-snapshots-repository-url=http://maven.nuclos.de/content/repositories/snapshots/
