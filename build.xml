@@ -376,6 +376,65 @@
         </artifact:mvn>
     </target>
 
+    <!-- Publish to maven -->
+    <target name="mavenpub2" depends="jars" description="Deploy JARs to Maven staging repository">
+
+        <!-- Define Maven coordinates -->
+        <property name="groupId" value="org.dellroad"/>
+        <property name="artifactId" value="${ant.project.name}"/>
+        <property name="version" value="${full.version}"/>
+
+        <!-- Define artifacts' name, which follows the convention of Maven -->
+        <property name="maven-jar" value="${dist}/lib/${artifactId}-${version}.jar" />
+        <property name="maven-javadoc-jar" value="${dist}/lib/${artifactId}-${version}-javadoc.jar" />
+        <property name="maven-sources-jar" value="${dist}/lib/${artifactId}-${version}-sources.jar" />
+
+        <!-- Define maven snapshots and staging repository id and url -->
+        <property name="maven-snapshots-repository-id" value="sonatype-nexus-snapshots" />
+        <property name="maven-snapshots-repository-url" value="https://oss.sonatype.org/content/repositories/snapshots/" />
+        <property name="maven-staging-repository-id" value="sonatype-nexus-staging" />
+        <property name="maven-staging-repository-url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2/" />
+
+        <!-- Generate pom.xml -->
+        <copy todir="build">
+            <fileset dir="src/mvn" includes="pom.xml"/>
+            <filterset>
+                <filter token="VERSION" value="${full.version}"/>
+                <filter token="GROUP_ID" value="org.dellroad"/>
+                <filter token="ARTIFACT_ID" value="${ant.project.name}"/>
+            </filterset>
+        </copy>
+
+        <!-- Sign and deploy the main artifact -->
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy-file" />
+            <arg value="-Durl=${maven-staging-repository-url}" />
+            <arg value="-DrepositoryId=${maven-staging-repository-id}" />
+            <arg value="-DpomFile=build/pom.xml" />
+            <arg value="-Dfile=build/dist/${ant.project.name}-${full.version}.jar"/>
+        </artifact:mvn>
+
+        <!-- sign and deploy the sources artifact -->
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy-file" />
+            <arg value="-Durl=${maven-staging-repository-url}" />
+            <arg value="-DrepositoryId=${maven-staging-repository-id}" />
+            <arg value="-DpomFile=build/pom.xml" />
+            <arg value="-Dfile=build/dist/${ant.project.name}-sources-${full.version}.zip"/>
+            <arg value="-Dclassifier=sources" />
+        </artifact:mvn>
+
+        <!-- sign and deploy the javadoc artifact -->
+        <artifact:mvn>
+            <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy-file" />
+            <arg value="-Durl=${maven-staging-repository-url}" />
+            <arg value="-DrepositoryId=${maven-staging-repository-id}" />
+            <arg value="-DpomFile=build/pom.xml" />
+            <arg value="-Dfile=build/dist/${ant.project.name}-javadocs-${full.version}.zip"/>
+            <arg value="-Dclassifier=javadoc" />
+        </artifact:mvn>
+    </target>
+
     <!-- Reports target -->
     <target name="reports-project" depends="javadoc, checkstyle, tests"/>
 
