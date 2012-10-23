@@ -21,6 +21,10 @@
                 <ivy      pattern="http://ivyroundup.googlecode.com/svn/trunk/repo/modules/[organisation]/[module]/[revision]/ivy.xml"/>
                 <artifact pattern="http://ivyroundup.googlecode.com/svn/trunk/repo/modules/[organisation]/[module]/[revision]/packager.xml"/>
             </packager>
+    
+            <!-- http://stackoverflow.com/questions/7313316/using-a-custom-repository-with-apache-ivy-no-resolver-found -->
+            <ibiblio name="central" m2compatible="true"/>
+
         </chain>
     </resolvers>
     <modules>
