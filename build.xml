@@ -397,6 +397,14 @@
         <property name="maven-snapshots-repository-url" value="https://oss.sonatype.org/content/repositories/snapshots/" />
         <property name="maven-staging-repository-id" value="sonatype-nexus-staging" />
         <property name="maven-staging-repository-url" value="https://oss.sonatype.org/service/local/staging/deploy/maven2/" />
+	
+	<condition property="repository-id" value="${maven-snapshots-repository-id}" else="${maven-staging-repository-id}">
+		<matches pattern="^.*-SNAPSHOT$" string="${full.version}"/>
+	</condition>
+	<condition property="repository-url" value="${maven-snapshots-repository-url}" else="${maven-staging-repository-url}">
+		<matches pattern="^.*-SNAPSHOT$" string="${full.version}"/>
+	</condition>
+	<echo message="repository id ${repository-id} url ${repository-url}"/>
 
         <!-- Generate pom.xml -->
         <copy todir="build">
@@ -411,8 +419,8 @@
         <!-- Sign and deploy the main artifact -->
         <artifact:mvn>
             <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy-file" />
-            <arg value="-Durl=${maven-staging-repository-url}" />
-            <arg value="-DrepositoryId=${maven-staging-repository-id}" />
+            <arg value="-Durl=${repository-url}" />
+            <arg value="-DrepositoryId=${repository-id}" />
             <arg value="-DpomFile=build/pom.xml" />
             <arg value="-Dfile=build/dist/${ant.project.name}-${full.version}.jar"/>
 	    <arg value="-Dversion=${full.version}"/>
@@ -422,8 +430,8 @@
         <!-- sign and deploy the sources artifact -->
         <artifact:mvn>
             <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy-file" />
-            <arg value="-Durl=${maven-staging-repository-url}" />
-            <arg value="-DrepositoryId=${maven-staging-repository-id}" />
+            <arg value="-Durl=${repository-url}" />
+            <arg value="-DrepositoryId=${repository-id}" />
             <arg value="-DpomFile=build/pom.xml" />
             <arg value="-Dfile=build/dist/${ant.project.name}-sources-${full.version}.zip"/>
             <arg value="-Dclassifier=sources" />
@@ -434,8 +442,8 @@
         <!-- sign and deploy the javadoc artifact -->
         <artifact:mvn>
             <arg value="org.apache.maven.plugins:maven-deploy-plugin:2.7:deploy-file" />
-            <arg value="-Durl=${maven-staging-repository-url}" />
-            <arg value="-DrepositoryId=${maven-staging-repository-id}" />
+            <arg value="-Durl=${repository-url}" />
+            <arg value="-DrepositoryId=${repository-id}" />
             <arg value="-DpomFile=build/pom.xml" />
             <arg value="-Dfile=build/dist/${ant.project.name}-javadocs-${full.version}.zip"/>
             <arg value="-Dclassifier=javadoc" />
