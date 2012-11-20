@@ -8,7 +8,6 @@
 package org.dellroad.stuff.vaadin7;
 
 import com.vaadin.server.VaadinSession;
-
 import java.io.ObjectStreamException;
 import java.io.Serializable;
 import java.util.concurrent.locks.ReentrantLock;
@@ -20,6 +19,8 @@ import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.wiring.BeanWiringInfoResolver;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
+
+import com.vaadin.server.VaadinServiceSession;
 
 /**
  * Aspect that autowires classes marked with the {@link VaadinConfigurable @VaadinConfigurable} annotation to a
