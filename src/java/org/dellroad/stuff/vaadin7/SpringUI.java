@@ -14,7 +14,7 @@ import com.vaadin.ui.VerticalLayout;
 @VaadinConfigurable
 public abstract class SpringUI extends UI implements ApplicationContextAware {
 	
-	private ConfigurableWebApplicationContext context;
+	private transient ConfigurableWebApplicationContext context;
 
 	/**
      * Creates a new empty UI without a caption. This UI will have a
@@ -40,7 +40,7 @@ public abstract class SpringUI extends UI implements ApplicationContextAware {
 
 	@Override
 	protected final void init(VaadinRequest request) {
-		initSpringUI(request, SpringServiceSession.getApplicationContext());
+		initSpringUI(request, SpringVaadinSession.getApplicationContext());
 	}
 
     /**
@@ -57,6 +57,9 @@ public abstract class SpringUI extends UI implements ApplicationContextAware {
     }
     
     public ConfigurableWebApplicationContext getContext() {
+        if (context == null) {
+            context = SpringVaadinSession.getApplicationContext();
+        }
     	return context;
     }
 

@@ -20,8 +20,6 @@ import org.springframework.beans.factory.wiring.BeanWiringInfoResolver;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 
-import com.vaadin.server.VaadinServiceSession;
-
 /**
  * Aspect that autowires classes marked with the {@link VaadinConfigurable @VaadinConfigurable} annotation to a
  * {@link SpringVaadinSession} application context.

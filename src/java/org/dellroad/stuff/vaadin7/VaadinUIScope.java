@@ -15,8 +15,9 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.Scope;
 import org.springframework.web.context.ConfigurableWebApplicationContext;
 
+import com.vaadin.server.ClientConnector.DetachEvent;
+import com.vaadin.server.ClientConnector.DetachListener;
 import com.vaadin.ui.UI;
-import com.vaadin.ui.UI.CleanupEvent;
 
 /**
  * A Spring custom {@link Scope} for Vaadin UI lifetime.
@@ -36,7 +37,7 @@ import com.vaadin.ui.UI.CleanupEvent;
  * Then declare scoped beans normally using the scope name {@code "vaadinUI"}.
  * </p>
  */
-public class VaadinUIScope implements Scope, BeanFactoryPostProcessor, UI.CleanupListener {
+public class VaadinUIScope implements Scope, BeanFactoryPostProcessor, DetachListener {
 
     /**
      * Key to the current application instance. For use by {@link #resolveContextualObject}.
@@ -61,8 +62,8 @@ public class VaadinUIScope implements Scope, BeanFactoryPostProcessor, UI.Cleanu
 // ContextApplication.CloseListener methods
 
     @Override
-    public void cleanup(CleanupEvent event) {
-    	final UI ui = event.getUI();
+    public void detach(DetachEvent event) {
+    	final UI ui = event.getConnector().getUI();
     	final UIScopeKey key = new UIScopeKey(getContextByUI(ui), ui.getUIId());
     	
         ApplicationBeanHolder beanHolder;
