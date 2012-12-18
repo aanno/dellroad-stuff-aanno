@@ -8,8 +8,6 @@
 package org.dellroad.stuff.schema;
 
 import java.io.PrintWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
@@ -25,9 +23,7 @@ import javax.sql.DataSource;
  * The {@link #setDataSource dataSource} property is required.
  */
 public abstract class AbstractUpdatingDataSource implements DataSource {
-    
-    private static final Class<?>[] NO_PARAMS = new Class<?>[0];
-    
+
     private DataSource dataSource;
     private boolean updated;
 
@@ -115,28 +111,6 @@ public abstract class AbstractUpdatingDataSource implements DataSource {
         }
     }
 
-    // @Override only in java7
-    public Logger getParentLogger() throws SQLFeatureNotSupportedException {
-        try {
-            final DataSource ds = getUpdatedDataSource();
-            final Method getParentLogger = DataSource.class.getMethod("getParentLogger", NO_PARAMS);
-            return (Logger) getParentLogger.invoke(ds);
-            // return getUpdatedDataSource().getParentLogger();
-        } catch (SQLException e) {
-            throw new SQLFeatureNotSupportedException(e);
-        } catch (SecurityException e) {
-            throw new SQLFeatureNotSupportedException(e);
-        } catch (NoSuchMethodException e) {
-            throw new SQLFeatureNotSupportedException(e);
-        } catch (IllegalArgumentException e) {
-            throw new SQLFeatureNotSupportedException(e);
-        } catch (IllegalAccessException e) {
-            throw new SQLFeatureNotSupportedException(e);
-        } catch (InvocationTargetException e) {
-            throw new SQLFeatureNotSupportedException(e);
-        }
-    }
-    
     // Internal methods
 
     private synchronized DataSource getUpdatedDataSource() throws SQLException {
